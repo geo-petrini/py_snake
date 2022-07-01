@@ -1,0 +1,5 @@
+/app.log
+/app_debug.log
+/pyvenv.cfg
+/venv
+/__pycache__
