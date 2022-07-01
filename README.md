@@ -1,0 +1,1 @@
+Simple Snake game implementation using pygame and classes with @property decorators.
