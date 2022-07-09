@@ -2,6 +2,8 @@ from pickletools import UP_TO_NEWLINE
 from tkinter import RIGHT
 from turtle import position
 import pygame
+from pygame import Surface, transform
+import pygame_gui
 import logging
 import random
 import logmanager
@@ -28,6 +30,8 @@ SNAKE_2_HEAD_COLOR = pygame.Color('darkolivegreen')
 DEBUG_COLOR = pygame.Color("orchid")
 
 BLOCK_SIZE = 10
+
+FPS = 15
 
 surface = None
 
@@ -56,11 +60,18 @@ class Position():
         return (self.x, self.y)
 
 class Food():
-    size = BLOCK_SIZE
 
-    def __init__(self, position, color=FOOD_COLOR):
+    def __init__(self, position, color=FOOD_COLOR, size=BLOCK_SIZE):
         self.color = color
         self.position = position
+        self.size = size
+        self.width = self.size
+        self.height = self.size        
+        self.surface = Surface((self.width+4, self.height+4))
+        self.surface.set_colorkey((0, 0, 0))
+        self.surface.fill(color)
+        self.rect = self.surface.get_rect() 
+        self.rotation = 0        
         #logging.debug(f'{self}')
         
     @property
@@ -81,6 +92,24 @@ class Food():
 
 
     def draw(self):
+        self.surface.fill( self.color.correct_gamma(0.1) )  # refill the surface color if you change it somewhere in the program
+        self.rect = self.surface.get_rect()
+        self.rect.center = (self.x + self.size//2, self.y + self.size//2)    
+    
+        self.rotation = self.rotation + 2
+        old_center = self.rect.center
+        new = transform.rotate(self.surface, self.rotation)
+        self.rect = new.get_rect()
+        self.rect.center = old_center
+        surface.blit(new, self.rect)   
+        '''
+        if self.frame <= 3:
+            self.frame = self.frame+1
+            pygame.draw.rect(surface,self.color.correct_gamma(0.2),[self.position.x-self.frame, self.position.y-self.frame, self.size+self.frame*2, self.size+self.frame*2])
+        else:
+            self.frame = 0
+            '''
+        
         pygame.draw.rect(surface,self.color,[self.position.x, self.position.y, self.size, self.size])
 
     def reload(self):
@@ -258,21 +287,24 @@ def add_snakes(n = 4):
         color = globals()[f'SNAKE_{index}_COLOR'] if f'SNAKE_{index}_COLOR' in globals() else DEBUG_COLOR
         head_color = color.correct_gamma(0.5) #globals()[f'SNAKE_{index}_HEAD_COLOR'] if f'SNAKE_{index}_HEAD_COLOR' in globals() else DEBUG_COLOR
         name = f'Player {index}'
-        x = surface.get_size()[0]//2 + index * BLOCK_SIZE
-        y = surface.get_size()[1]//2 + index * BLOCK_SIZE
+        x = surface.get_size()[0]//2 + index * BLOCK_SIZE * 2
+        y = surface.get_size()[1]//2 + index * BLOCK_SIZE * 2
         #p = Position( x, y )
         #s = Snake(p, color=color, head_color=head_color, name=name)
         snakes.append( Snake(Position( x, y ), color=color, head_color=head_color, name=name) )
     return snakes
 
 
-def add_food():
+def add_food(items = 1):
     (w, h) = surface.get_size()
-    foodx = round(random.randrange(0, w - BLOCK_SIZE) / 10.0) * 10.0
-    foody = round(random.randrange(0, h - BLOCK_SIZE) / 10.0) * 10.0   
+    foods = []
+    for n in range(items):
+        foodx = round(random.randrange(0, w - BLOCK_SIZE) / 10.0) * 10.0
+        foody = round(random.randrange(0, h - BLOCK_SIZE) / 10.0) * 10.0   
 
-    f = Food( Position(foodx, foody) ) 
-    return f
+        f = Food( Position(foodx, foody) ) 
+        foods.append(f)
+    return foods
 
 def chk_collision(s, f):
     #TODO collision display and snake
@@ -382,6 +414,8 @@ def startgame():
     width = 800
     height = 600
     surface = pygame.display.set_mode((width,height))
+    ui_manager = pygame_gui.UIManager(surface.get_size())
+    ui_manager.set_visual_debug_mode(True)
     #pygame.display.update()
     pygame.display.set_caption('Snake game')
     
@@ -390,11 +424,12 @@ def startgame():
     display_debug = False
     
     snakes = add_snakes()
-    food = add_food()
+    foods = add_food( len(snakes) )
     
     clock = pygame.time.Clock()
     start_time = pygame.time.get_ticks() 
     while not game_over:
+        time_delta = clock.tick(FPS)
         for event in pygame.event.get():
             #logging.debug(event)   #prints out all the actions that take place on the screen
             if event.type==pygame.QUIT:
@@ -428,24 +463,30 @@ def startgame():
                     pause = not pause
                 if event.key == pygame.K_ESCAPE:
                     game_over = True 
+             
+            ui_manager.process_events(event)
 
         surface.fill(BACKGROUND_COLOR)
 
         if not pause: 
             for snake in snakes:
                 snake.update()
-                chk_collision(snake, food)
+                for food in foods:
+                    chk_collision(snake, food)
 
             count_time = pygame.time.get_ticks() - start_time
             #_display_time(count_time)
         
 
         for snake in snakes:
-            _display_helpers(snake, food)
             snake.draw()
-
+            for food in foods:
+                food.draw()
+                _display_helpers(snake, food)
+        
+        
         _display_score( snakes )
-        food.draw()
+        
 
         if pause: _display_pause()
 
@@ -453,10 +494,13 @@ def startgame():
             _display_grid()
             _display_mouse_coordinates()
             _display_debug_info( [*snakes, food] )        
-
+        
+        ui_manager.update(time_delta)
+        ui_manager.draw_ui(surface)
         pygame.display.update()
+        
 
-        clock.tick(15)
+        
     
     pygame.quit()
     quit()    
