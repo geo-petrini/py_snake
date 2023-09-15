@@ -2,7 +2,7 @@ from pickletools import UP_TO_NEWLINE
 from tkinter import RIGHT
 from turtle import position
 import pygame
-from pygame import Surface, transform
+from pygame import Surface, transform, Rect
 import pygame_gui
 import logging
 import random
@@ -15,7 +15,8 @@ import logmanager
 logmanager.get_configured_logger()
 
 #https://www.pygame.org/docs/ref/color_list.html
-BACKGROUND_COLOR = pygame.Color('whitesmoke')
+# BACKGROUND_COLOR = pygame.Color('whitesmoke')
+BACKGROUND_COLOR = pygame.Color('antiquewhite')
 HELPER_COLOR = pygame.Color('wheat4')
 SNAKE_1_COLOR = pygame.Color('royalblue4')
 SNAKE_2_COLOR = pygame.Color('darkolivegreen4')
@@ -24,8 +25,8 @@ SNAKE_4_COLOR = pygame.Color('slateblue3')
 FOOD_COLOR = pygame.Color('orangered2')
 FONT_COLOR = pygame.Color('gray23')
 
-SNAKE_1_HEAD_COLOR= pygame.Color('royalblue')
-SNAKE_2_HEAD_COLOR = pygame.Color('darkolivegreen')
+#SNAKE_1_HEAD_COLOR = pygame.Color('royalblue')
+#SNAKE_2_HEAD_COLOR = pygame.Color('darkolivegreen')
 
 DEBUG_COLOR = pygame.Color("orchid")
 
@@ -67,13 +68,13 @@ class Food():
         self.size = size
         self.width = self.size
         self.height = self.size        
-        self.surface = Surface((self.width+4, self.height+4))
-        self.surface.set_colorkey((0, 0, 0))
-        self.surface.fill(color)
-        self.rect = self.surface.get_rect() 
+        #self.surface = Surface((self.width+self.width//3, self.height+self.height//3))
+        #self.surface.set_colorkey((0, 0, 0))
+        #self.surface.fill(color)
+        #self.rect = self.surface.get_rect() 
         self.rotation = 0        
         #logging.debug(f'{self}')
-        
+   
     @property
     def x(self):
         return self.position.x if self.position else None
@@ -90,9 +91,24 @@ class Food():
     def y(self, value):
         self.position.y = value
 
+    @property
+    def center(self):
+        return ( self.x+self.width//2, self.y+self.height//2 )
 
     def draw(self):
-        self.surface.fill( self.color.correct_gamma(0.1) )  # refill the surface color if you change it somewhere in the program
+        #self.OLD__draw_rotating_surface()
+        self.__draw_rotating_surface()
+        '''
+        if self.frame <= 3:
+            self.frame = self.frame+1
+            pygame.draw.rect(surface,self.color.correct_gamma(0.2),[self.position.x-self.frame, self.position.y-self.frame, self.size+self.frame*2, self.size+self.frame*2])
+        else:
+            self.frame = 0
+            '''
+        
+        pygame.draw.rect(window, self.color,[self.x, self.y, self.size, self.size])
+
+    def OLD__draw_rotating_surface(self):
         self.rect = self.surface.get_rect()
         self.rect.center = (self.x + self.size//2, self.y + self.size//2)    
     
@@ -102,20 +118,31 @@ class Food():
         self.rect = new.get_rect()
         self.rect.center = old_center
         window.blit(new, self.rect)   
-        '''
-        if self.frame <= 3:
-            self.frame = self.frame+1
-            pygame.draw.rect(surface,self.color.correct_gamma(0.2),[self.position.x-self.frame, self.position.y-self.frame, self.size+self.frame*2, self.size+self.frame*2])
-        else:
-            self.frame = 0
-            '''
-        
-        pygame.draw.rect(window,self.color,[self.position.x, self.position.y, self.size, self.size])
+
+    def __draw_rotating_surface(self):
+        image = pygame.Surface((self.width+self.width//3, self.height+self.height//3), pygame.SRCALPHA)
+        #image = pygame.Surface( (self.size, self.size), pygame.SRCALPHA)
+        image.fill( self.color.correct_gamma(0.1) )  # refill the surface color if you change it somewhere in the program
+        x = 0
+        y = 0
+        self.rotation = self.rotation + 2
+        #blit_rotate_center(window, s, (self.x, self.x), self.rotation)
+        #w, h = pygame.display.get_surface().get_size()
+        #new_surf, new_rect = rot_center(s, self.rotation, 0,0)
+        # r = s.get_rect()
+        #r.center = (self.x + self.size//2, self.y + self.size//2)    
+    
+        #old_center = r.center
+        rotated_image = pygame.transform.rotate(image, self.rotation)
+        new_rect = rotated_image.get_rect(center = image.get_rect().center)
+        new_rect.center = ( self.x+self.width//2, self.y+self.height//2 )
+        new_rect.center = self.center
+        window.blit(rotated_image, new_rect.topleft)          
 
     def reload(self):
         (w, h) = window.get_size()
-        self.position.x = round(random.randrange(0, w - BLOCK_SIZE) / 10.0) * 10.0
-        self.position.y = round(random.randrange(0, h - BLOCK_SIZE) / 10.0) * 10.0  
+        self.position.x = round(random.randrange(0, w - self.size) / self.size) * self.size
+        self.position.y = round(random.randrange(0, h - self.size) / self.size) * self.size
         #logging.debug(f'{self}')
 
     def _info_str(self) -> str:
@@ -126,15 +153,69 @@ class Food():
 
 class Segment():
     _position = None
-    def __init__(self, position, index = None, size=10, color=pygame.Color("black")):
+    def __init__(self, position, index = None, size=10, color=pygame.Color("darkgray")):
         self.color = color
         self.size = size
         self.index = index
         self.position = position    #uses @position.setter which does a deep copy
         #logging.debug(f'{self}')
 
-    def draw(self):
+    def draw(self, direction=None):
         pygame.draw.rect(window, self.color, [self.x, self.y, self.size, self.size])
+        if self.index != None and 'head' in self.index:
+            self.__render_head(window, direction)
+
+    def __render_head(self, window, direction):
+            '''
+            draw a face in the head segment
+            rotate the head segment by 90°
+            ! the rect x,y will be the same as the original x,y as by https://camo.githubusercontent.com/e3b9946d5ecde4d11a3d4eca0b8f88bcb64969acd8621891a6868faaa0bef1e0/68747470733a2f2f692e737461636b2e696d6775722e636f6d2f76726867742e676966
+            '''
+            try:
+                if self.head_animation_opening and self.head_animation_frame < 4:
+                    self.head_animation_frame += 1
+                else:
+                    self.head_animation_opening = False
+
+                if not self.head_animation_opening and self.head_animation_frame > 0:
+                    self.head_animation_frame -= 1
+                else:
+                    self.head_animation_opening = True
+
+            except Exception as e:
+                self.head_animation_frame = 0
+                self.head_animation_opening = True
+
+            head_surface = pygame.Surface( (self.size, self.size) )
+            pygame.draw.rect(head_surface, self.color, [0, 0, self.size, self.size])    #draw background
+
+            mouth_color = pygame.Color("black")
+            mouth_line_width = self.size // 10
+            mouth_x1 = self.size // 4
+            mouth_y1 = self.size // 8
+            mouth_x2 = self.size - mouth_x1
+            mouth_y2 = mouth_y1 + mouth_line_width*self.head_animation_frame
+            mouth_start = (mouth_x1 , mouth_y1)
+            mouth_end = (mouth_x2, mouth_y2)
+
+            pygame.draw.ellipse(head_surface, mouth_color, pygame.Rect( mouth_x1, mouth_y1, mouth_x2-mouth_x1, mouth_y2-mouth_y1), width=mouth_line_width)    #draw mouth
+            
+            #pygame.draw.line(head_surface, mouth_color, mouth_start, mouth_end, mouth_line_width)
+            new = head_surface
+            if direction == Snake.UP:
+                pass
+            if direction == Snake.RIGHT:
+                #rotate 90deg 
+                new = pygame.transform.rotate(head_surface, -90)
+            if direction == Snake.DOWN:
+                #rotate 180deg
+                new = pygame.transform.rotate(head_surface, 90*2)
+            if direction == Snake.LEFT:
+                #rotate 270deg
+                new = pygame.transform.rotate(head_surface, -90*3)
+            #pygame.transform.rotate(head_surface, angle)
+            draw_area = head_surface.get_rect().move(self.x, self.y)        
+            window.blit(new, draw_area)
 
     @property
     def position(self):
@@ -184,12 +265,13 @@ class Snake():
     lenght = 1
     body = None
 
-    def __init__(self, position, color=SNAKE_1_COLOR, head_color=SNAKE_1_HEAD_COLOR, name='Player 1', keys={'left':None, 'right':None}):
+    def __init__(self, position, color=SNAKE_1_COLOR, head_color=None, name='Player 1', keys={'left':None, 'right':None}, direction=None):
         self.name = name
         self.color = color
-        self.head_color = head_color
+        self.head_color = head_color if head_color else self.color.correct_gamma(0.5)
         self.left_key = keys['left']
         self.right_key = keys['right']
+        self.direction = direction
         #self.head = SnakeSegment(position, color=self.head_color, size=self.size)
         #self.body.append(self.head)
         head_segment = Segment(position, index=f'{self.name}:head', color=self.head_color, size=self.size)
@@ -197,7 +279,7 @@ class Snake():
         
     def draw(self):
         for i, segment in enumerate(self.body):
-            segment.draw()
+            segment.draw(self.direction)
             #if i == 0:
             #    pygame.draw.rect(DISPLAY, self.head_color, [segment.x, segment.y, self.size, self.size])
             #else:
@@ -326,6 +408,31 @@ class Game():
             pygame.display.set_icon(icon)
         except:
             pass
+
+    def NOT_IMPLEMENTED__calc_window_size():
+        global BLOCK_SIZE
+        #min size 800x600
+        #min blocks 21x21
+        #max size screen width height
+        #window must be multiple of BLOCK_SIZE
+        screen_info = pygame.display.Info() #Required to set a good resolution for the game screen
+        screen_width = screen_info.current_w
+        screen_height = screen_info.current_h
+        first_screen = (screen_width, screen_height) #Take 120 pixels from the height because the menu bar, window bar and dock takes space 
+        if screen_width < 800 or screen_height < 600:
+            pygame.QUIT
+
+        if screen_width == 800 and screen_height == 600:
+            #adjust block size so that min blocks 21x21 is satisfied
+            pass
+
+        #check if min blocks 21x21 is < thand screen size
+
+        #else
+        width = BLOCK_SIZE * 21
+        height = BLOCK_SIZE * 21
+
+
     
     @property
     def width(self):
@@ -343,32 +450,65 @@ class Game():
     def foods(self):
         return self.__foods
 
-    def add_snakes(self, n = 4):
+    def add_snakes(self, n = 1):
         for i in range(n):
             index = i+1
             color = globals()[f'SNAKE_{index}_COLOR'] if f'SNAKE_{index}_COLOR' in globals() else DEBUG_COLOR
-            head_color = color.correct_gamma(0.5) #globals()[f'SNAKE_{index}_HEAD_COLOR'] if f'SNAKE_{index}_HEAD_COLOR' in globals() else DEBUG_COLOR
+            #head_color = color.correct_gamma(0.5) #globals()[f'SNAKE_{index}_HEAD_COLOR'] if f'SNAKE_{index}_HEAD_COLOR' in globals() else DEBUG_COLOR
             name = f'Player {index}'
-            x = window.get_size()[0]//2 + index * BLOCK_SIZE * 2
-            y = window.get_size()[1]//2 + index * BLOCK_SIZE * 2
+            # x = window.get_size()[0]//2 + index * BLOCK_SIZE * 2
+            # y = window.get_size()[1]//2 + index * BLOCK_SIZE * 2
             #p = Position( x, y )
             #s = Snake(p, color=color, head_color=head_color, name=name)
             if i == 0: keys = {'left':pygame.K_LEFT, 'right':pygame.K_RIGHT}
             if i == 1: keys = {'left':pygame.K_a, 'right':pygame.K_s}
             if i == 2: keys = {'left':pygame.K_k, 'right':pygame.K_l}
             if i == 3: keys = {'left':pygame.K_b, 'right':pygame.K_n}
+
+            position, direction = self.__init_snake_position(index)
             
-            self.snakes.append( Snake( position=Position( x, y ), color=color, head_color=head_color, name=name, keys=keys) )
+            self.snakes.append( Snake( position=position, color=color, head_color=None, name=name, keys=keys, direction=direction) )
+
+    def __init_snake_position(self, index):
+        '''
+          3
+        1   2  
+          4
+        '''
+        if index == 1:
+            x = window.get_size()[0]//2 - 3*BLOCK_SIZE 
+            y = window.get_size()[1]//2
+            direction = Snake.LEFT
+
+        if index == 2:
+            x = window.get_size()[0]//2 + 3*BLOCK_SIZE 
+            y = window.get_size()[1]//2
+            direction = Snake.RIGHT     
+
+        if index == 3:
+            x = window.get_size()[0]//2
+            y = window.get_size()[1]//2 - 3*BLOCK_SIZE 
+            direction = Snake.UP            
+
+        if index == 4:
+            x = window.get_size()[0]//2 
+            y = window.get_size()[1]//2 + 3*BLOCK_SIZE 
+            direction = Snake.DOWN
+
+        return ( Position(x, y), direction  )            
 
     def add_food(self, items = 1):
         (w, h) = window.get_size()
         
         for n in range(items):
-            foodx = round(random.randrange(0, w - BLOCK_SIZE) / 10.0) * 10.0
-            foody = round(random.randrange(0, h - BLOCK_SIZE) / 10.0) * 10.0   
+            # foodx = round(random.randrange(0, w - BLOCK_SIZE) / 10.0) * 10.0
+            # foody = round(random.randrange(0, h - BLOCK_SIZE) / 10.0) * 10.0   
+            foodx = round(random.randrange(0, w - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
+            foody = round(random.randrange(0, h - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
 
             f = Food( position=Position(foodx, foody) ) 
             self.foods.append(f)
+            logging.debug(f'new food {f}')
 
     def chk_collision(self, s, f):
         #TODO collision display and snake
@@ -474,7 +614,7 @@ class Game():
     def _handle_events(self):
         for event in pygame.event.get():
             #logging.debug(event)   #prints out all the actions that take place on the screen
-            if event.type==pygame.QUIT:
+            if event.type == pygame.QUIT:
                 self.__game_over=True    
             if event.type == pygame.KEYDOWN:
                 
@@ -503,7 +643,7 @@ class Game():
                     self._print_debug_info( [*snakes, food] )
 
                 if event.key == pygame.K_SPACE:
-                    self.__pause = not self.pause
+                    self.__pause = not self.__pause
                 if event.key == pygame.K_ESCAPE:
                     self.__game_over = True 
              
@@ -539,7 +679,7 @@ class Game():
             if self.__display_debug:
                 self._display_grid()
                 self._display_mouse_coordinates()
-                self._display_debug_info( [*snakes, food] )        
+                self._display_debug_info( [*self.snakes, food] )        
             
             if self.__pause: self._display_pause()
             
@@ -550,6 +690,19 @@ class Game():
         pygame.quit()
         quit()    
 
+def rot_center(image, angle, x, y):
+    
+    rotated_image = pygame.transform.rotate(image, angle)
+    new_rect = rotated_image.get_rect(center = image.get_rect(center = (x, y)).center)
+
+    return rotated_image, new_rect
+
+def blit_rotate_center(surf, image, topleft, angle):
+
+    rotated_image = pygame.transform.rotate(image, angle)
+    new_rect = rotated_image.get_rect(center = image.get_rect(topleft = topleft).center)
+
+    surf.blit(rotated_image, new_rect.topleft)
 
 if __name__ == "__main__":
     g = Game()

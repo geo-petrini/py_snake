@@ -1,3 +1,5 @@
-pygame==2.1.2
-pygame-gui==0.6.4
-python-i18n==0.3.9
+pygame
+#pygame==2.1.2
+pygame-gui
+#pygame-gui==0.6.9
+#python-i18n==0.3.9
