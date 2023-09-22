@@ -50,7 +50,11 @@ class Food():
             self.frame = 0
             '''
         
+<<<<<<< HEAD
         pygame.draw.rect(WINDOW, self.color,[self.x, self.y, self.size, self.size])
+=======
+        pygame.draw.rect(pygame.display.get_surface(), self.color,[self.x, self.y, self.size, self.size])
+>>>>>>> b8bf71d7a2a8b9e4cb727ceb822909f2f667a745
 
     def OLD__draw_rotating_surface(self):
         self.rect = self.surface.get_rect()
@@ -61,7 +65,11 @@ class Food():
         new = transform.rotate(self.surface, self.rotation)
         self.rect = new.get_rect()
         self.rect.center = old_center
+<<<<<<< HEAD
         WINDOW.blit(new, self.rect)   
+=======
+        pygame.display.get_surface().blit(new, self.rect)   
+>>>>>>> b8bf71d7a2a8b9e4cb727ceb822909f2f667a745
 
     def __draw_rotating_surface(self):
         image = pygame.Surface((self.width+self.width//3, self.height+self.height//3), pygame.SRCALPHA)
@@ -70,7 +78,11 @@ class Food():
         x = 0
         y = 0
         self.rotation = self.rotation + 2
+<<<<<<< HEAD
         #blit_rotate_center(WINDOW, s, (self.x, self.x), self.rotation)
+=======
+        #blit_rotate_center(pygame.display.get_surface(), s, (self.x, self.x), self.rotation)
+>>>>>>> b8bf71d7a2a8b9e4cb727ceb822909f2f667a745
         #w, h = pygame.display.get_surface().get_size()
         #new_surf, new_rect = rot_center(s, self.rotation, 0,0)
         # r = s.get_rect()
@@ -81,10 +93,17 @@ class Food():
         new_rect = rotated_image.get_rect(center = image.get_rect().center)
         new_rect.center = ( self.x+self.width//2, self.y+self.height//2 )
         new_rect.center = self.center
+<<<<<<< HEAD
         WINDOW.blit(rotated_image, new_rect.topleft)          
 
     def reload(self):
         (w, h) = WINDOW.get_size()
+=======
+        pygame.display.get_surface().blit(rotated_image, new_rect.topleft)          
+
+    def reload(self):
+        (w, h) = pygame.display.get_surface().get_size()
+>>>>>>> b8bf71d7a2a8b9e4cb727ceb822909f2f667a745
         self.position.x = round(random.randrange(0, w - self.size) / self.size) * self.size
         self.position.y = round(random.randrange(0, h - self.size) / self.size) * self.size
         #logging.debug(f'{self}')

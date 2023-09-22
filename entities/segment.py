@@ -12,7 +12,11 @@ class Segment():
         #logging.debug(f'{self}')
 
     def draw(self, direction=None):
+<<<<<<< HEAD
         pygame.draw.rect(WINDOW, self.color, [self.x, self.y, self.size, self.size])
+=======
+        pygame.draw.rect(pygame.display.get_surface(), self.color, [self.x, self.y, self.size, self.size])
+>>>>>>> b8bf71d7a2a8b9e4cb727ceb822909f2f667a745
         if self.index != None and 'head' in self.index:
             self.__render_head(direction)
 
@@ -66,7 +70,11 @@ class Segment():
                 new = pygame.transform.rotate(head_surface, -90*3)
             #pygame.transform.rotate(head_surface, angle)
             draw_area = head_surface.get_rect().move(self.x, self.y)        
+<<<<<<< HEAD
             WINDOW.blit(new, draw_area)
+=======
+            pygame.display.get_surface().blit(new, draw_area)
+>>>>>>> b8bf71d7a2a8b9e4cb727ceb822909f2f667a745
 
     @property
     def position(self):

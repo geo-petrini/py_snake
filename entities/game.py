@@ -29,6 +29,10 @@ class Game():
         self.__game_over = False
         self.__pause = False
         self.__display_debug = False  
+<<<<<<< HEAD
+=======
+        self.__game_initialized = False
+>>>>>>> b8bf71d7a2a8b9e4cb727ceb822909f2f667a745
 
         self.__snakes = []
         self.__foods = []
@@ -37,6 +41,10 @@ class Game():
         pygame.init()
 
         WINDOW = pygame.display.set_mode((self.window_width, self.window_height))
+<<<<<<< HEAD
+=======
+        WINDOW = pygame.display.get_surface()
+>>>>>>> b8bf71d7a2a8b9e4cb727ceb822909f2f667a745
         
         self.__ui_manager = pygame_gui.UIManager(WINDOW.get_size())
         self.__ui_manager.set_visual_debug_mode(True)
@@ -119,6 +127,7 @@ class Game():
         1   2  
           4
         '''
+<<<<<<< HEAD
         if index == 1:
             x = WINDOW.get_size()[0]//2 - 3*BLOCK_SIZE 
             y = WINDOW.get_size()[1]//2
@@ -139,6 +148,31 @@ class Game():
             y = WINDOW.get_size()[1]//2 + 3*BLOCK_SIZE 
             direction = DIRECTION_DOWN
 
+=======
+        surface_width = WINDOW.get_size()[0]
+        surface_height = WINDOW.get_size()[1]
+        if index == 1:
+            x = surface_width//2 - 3*BLOCK_SIZE 
+            y = surface_height//2
+            direction = DIRECTION_LEFT
+
+        if index == 2:
+            x = surface_width//2 + 3*BLOCK_SIZE 
+            y = surface_height//2
+            direction = DIRECTION_RIGHT    
+
+        if index == 3:
+            x = surface_width//2
+            y = surface_height//2 - 3*BLOCK_SIZE 
+            direction = DIRECTION_UP           
+
+        if index == 4:
+            x = surface_width//2 
+            y = surface_height//2 + 3*BLOCK_SIZE 
+            direction = DIRECTION_DOWN
+
+        logging.debug(f'{index}, position: {x},{y}, direction: {direction}, screen {surface_width},{surface_height}')
+>>>>>>> b8bf71d7a2a8b9e4cb727ceb822909f2f667a745
         return ( Position(x, y), direction  )            
 
     def add_food(self, items = 1):
@@ -204,7 +238,11 @@ class Game():
             helperh = max(max(s.y, f.y) - helpery, BLOCK_SIZE)
             '''
             #logging.debug(f'helpers: x: {helperx}, y: {helpery}, w: {helperw}, h: {helperh}')
+<<<<<<< HEAD
             pygame.draw.rect(self.__window, HELPER_COLOR, [helperx, helpery, helperw, helperh], 3)
+=======
+            pygame.draw.rect(WINDOW, HELPER_COLOR, [helperx, helpery, helperw, helperh], 3)
+>>>>>>> b8bf71d7a2a8b9e4cb727ceb822909f2f667a745
         
     def _display_countdown(self):
         font = pygame.font.Font('./asset/Fipps-Regular.otf', 32)
@@ -296,15 +334,23 @@ class Game():
                     self.__game_over = True 
             
             if event.type == TIMER_TICK_EVENT:
+<<<<<<< HEAD
                 self.countdown_timer -= 1
+=======
+                if self.countdown_timer > 0: self.countdown_timer -= 1
+>>>>>>> b8bf71d7a2a8b9e4cb727ceb822909f2f667a745
 
              
             self.__ui_manager.process_events(event)        
 
     def start(self):
 
+<<<<<<< HEAD
         self.add_snakes( self.__players_number )
         self.add_food( self.__players_number )
+=======
+
+>>>>>>> b8bf71d7a2a8b9e4cb727ceb822909f2f667a745
         
         clock = pygame.time.Clock()
         start_time = pygame.time.get_ticks() 
@@ -313,6 +359,15 @@ class Game():
             WINDOW.fill(BACKGROUND_COLOR)
             self._handle_events()
             self._display_countdown()
+<<<<<<< HEAD
+=======
+            if self.countdown_timer == 2 and not self.__game_initialized:
+                self.add_snakes( self.__players_number )
+                self.add_food( self.__players_number )
+                self.__game_initialized = True
+
+
+>>>>>>> b8bf71d7a2a8b9e4cb727ceb822909f2f667a745
             self._display_score()
 
             if not self.__pause: self._update_snakes()
@@ -330,7 +385,11 @@ class Game():
             if self.__display_debug:
                 self._display_grid()
                 self._display_mouse_coordinates()
+<<<<<<< HEAD
                 self._display_debug_info( [*self.snakes, food] )        
+=======
+                self._display_debug_info( [*self.snakes, *self.foods] )        
+>>>>>>> b8bf71d7a2a8b9e4cb727ceb822909f2f667a745
             
             if self.__pause: self._display_pause()
             
