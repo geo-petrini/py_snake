@@ -10,7 +10,7 @@ import logmanager
 
 from entities.globals import *
 from entities.food import Food
-from entities.snake import Snake
+from entities.snake import *
 from entities.position import Position
 
 #import sys
@@ -29,10 +29,7 @@ class Game():
         self.__game_over = False
         self.__pause = False
         self.__display_debug = False  
-<<<<<<< HEAD
-=======
         self.__game_initialized = False
->>>>>>> b8bf71d7a2a8b9e4cb727ceb822909f2f667a745
 
         self.__snakes = []
         self.__foods = []
@@ -41,10 +38,6 @@ class Game():
         pygame.init()
 
         WINDOW = pygame.display.set_mode((self.window_width, self.window_height))
-<<<<<<< HEAD
-=======
-        WINDOW = pygame.display.get_surface()
->>>>>>> b8bf71d7a2a8b9e4cb727ceb822909f2f667a745
         
         self.__ui_manager = pygame_gui.UIManager(WINDOW.get_size())
         self.__ui_manager.set_visual_debug_mode(True)
@@ -127,28 +120,6 @@ class Game():
         1   2  
           4
         '''
-<<<<<<< HEAD
-        if index == 1:
-            x = WINDOW.get_size()[0]//2 - 3*BLOCK_SIZE 
-            y = WINDOW.get_size()[1]//2
-            direction = DIRECTION_LEFT
-
-        if index == 2:
-            x = WINDOW.get_size()[0]//2 + 3*BLOCK_SIZE 
-            y = WINDOW.get_size()[1]//2
-            direction = DIRECTION_RIGHT    
-
-        if index == 3:
-            x = WINDOW.get_size()[0]//2
-            y = WINDOW.get_size()[1]//2 - 3*BLOCK_SIZE 
-            direction = DIRECTION_UP           
-
-        if index == 4:
-            x = WINDOW.get_size()[0]//2 
-            y = WINDOW.get_size()[1]//2 + 3*BLOCK_SIZE 
-            direction = DIRECTION_DOWN
-
-=======
         surface_width = WINDOW.get_size()[0]
         surface_height = WINDOW.get_size()[1]
         if index == 1:
@@ -172,7 +143,6 @@ class Game():
             direction = DIRECTION_DOWN
 
         logging.debug(f'{index}, position: {x},{y}, direction: {direction}, screen {surface_width},{surface_height}')
->>>>>>> b8bf71d7a2a8b9e4cb727ceb822909f2f667a745
         return ( Position(x, y), direction  )            
 
     def add_food(self, items = 1):
@@ -186,22 +156,31 @@ class Game():
             self.foods.append(f)
             logging.debug(f'new food {f}')
 
-    def chk_collision(self, s, f):
-        #TODO collision display and snake
-        #TODO collision snake and snake
+    def chk_collision(self, item, target):
+        if isinstance(target, list):
+            for t in target:
+                if item != t:
+                    self.chk_collision(item, t)
 
         #collision snake and food
-        if s.position == f.position:
-            s.eat()
-            logging.debug(f'eat: {s}, {f}')
-            f.reload()
+        if isinstance(item, Snake) and isinstance(target, Food):
+            if item.position == target.position:
+                item.eat()
+                logging.debug(f'eat: {item}, {target}')
+                target.reload()
+
+        if isinstance(item, Snake) and isinstance(target, Snake) :
+            if item.collide_vs_snake(target):
+                item.die()
+                logging.debug(f'die: {item}')
 
     def _display_pause(self):
-        font = pygame.font.Font('./asset/Fipps-Regular.otf', 32)
-        pause_text = font.render('PAUSE', True, FONT_COLOR)
-        pause_text_rect = pause_text.get_rect()
-        pause_text_rect.center = (self.width//2, self.height//2)
-        WINDOW.blit(pause_text, pause_text_rect)
+        if self.__pause:
+            font = pygame.font.Font('./asset/Fipps-Regular.otf', 32)
+            pause_text = font.render('PAUSE', True, FONT_COLOR)
+            pause_text_rect = pause_text.get_rect()
+            pause_text_rect.center = (self.width//2, self.height//2)
+            WINDOW.blit(pause_text, pause_text_rect)
 
     def _display_helpers(self, s, f):
         if s.x == f.x or s.y == f.y:
@@ -238,11 +217,7 @@ class Game():
             helperh = max(max(s.y, f.y) - helpery, BLOCK_SIZE)
             '''
             #logging.debug(f'helpers: x: {helperx}, y: {helpery}, w: {helperw}, h: {helperh}')
-<<<<<<< HEAD
-            pygame.draw.rect(self.__window, HELPER_COLOR, [helperx, helpery, helperw, helperh], 3)
-=======
             pygame.draw.rect(WINDOW, HELPER_COLOR, [helperx, helpery, helperw, helperh], 3)
->>>>>>> b8bf71d7a2a8b9e4cb727ceb822909f2f667a745
         
     def _display_countdown(self):
         font = pygame.font.Font('./asset/Fipps-Regular.otf', 32)
@@ -303,8 +278,7 @@ class Game():
             if event.type == pygame.QUIT:
                 self.__game_over=True    
             if event.type == pygame.KEYDOWN:
-                
-                
+
                 for snake in self.snakes:       
                     try:
                         if event.key == snake.left_key: snake.rotate_left()
@@ -334,64 +308,52 @@ class Game():
                     self.__game_over = True 
             
             if event.type == TIMER_TICK_EVENT:
-<<<<<<< HEAD
-                self.countdown_timer -= 1
-=======
                 if self.countdown_timer > 0: self.countdown_timer -= 1
->>>>>>> b8bf71d7a2a8b9e4cb727ceb822909f2f667a745
-
              
             self.__ui_manager.process_events(event)        
 
     def start(self):
-
-<<<<<<< HEAD
-        self.add_snakes( self.__players_number )
-        self.add_food( self.__players_number )
-=======
-
->>>>>>> b8bf71d7a2a8b9e4cb727ceb822909f2f667a745
-        
         clock = pygame.time.Clock()
         start_time = pygame.time.get_ticks() 
+
         while not self.__game_over:
             time_delta = clock.tick(FPS)
             WINDOW.fill(BACKGROUND_COLOR)
             self._handle_events()
-            self._display_countdown()
-<<<<<<< HEAD
-=======
-            if self.countdown_timer == 2 and not self.__game_initialized:
+            
+            if self.countdown_timer == 5 and not self.__game_initialized:
                 self.add_snakes( self.__players_number )
                 self.add_food( self.__players_number )
                 self.__game_initialized = True
 
-
->>>>>>> b8bf71d7a2a8b9e4cb727ceb822909f2f667a745
             self._display_score()
 
-            if not self.__pause: self._update_snakes()
+            if not self.__pause and self.countdown_timer <= 0: 
+                self._update_snakes()
 
             count_time = pygame.time.get_ticks() - start_time
             #self._display_time(count_time)
 
             for snake in self.snakes:
                 snake.draw()
+                self.chk_collision(snake, self.snakes)
                 for food in self.foods:
                     food.draw()
                     self.chk_collision(snake, food)
-                    self._display_helpers(snake, food)                    
+                    self._display_helpers(snake, food)
+
+            #do this loop after collisions to ensure collision check and make sure that all DEAD snakes are removed
+            for snake in self.snakes:
+                if snake.status == STATUS_DEAD:
+                    self.snakes.remove(snake)
 
             if self.__display_debug:
                 self._display_grid()
                 self._display_mouse_coordinates()
-<<<<<<< HEAD
-                self._display_debug_info( [*self.snakes, food] )        
-=======
                 self._display_debug_info( [*self.snakes, *self.foods] )        
->>>>>>> b8bf71d7a2a8b9e4cb727ceb822909f2f667a745
             
-            if self.__pause: self._display_pause()
+            self._display_pause()
+            self._display_countdown()
             
             self.__ui_manager.update(time_delta)
             self.__ui_manager.draw_ui(WINDOW)

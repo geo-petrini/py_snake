@@ -3,6 +3,10 @@ from entities.segment import Segment
 
 import logging
 
+STATUS_INIT = 0
+STATUS_ALIVE = 1
+STATUS_DEAD = 2
+
 class Snake():
 
     direction = None
@@ -13,6 +17,7 @@ class Snake():
     body = None
 
     def __init__(self, position, color=SNAKE_1_COLOR, head_color=None, name='Player 1', keys={'left':None, 'right':None}, direction=None):
+        self.status = STATUS_INIT
         self.name = name
         self.color = color
         self.head_color = head_color if head_color else self.color.correct_gamma(0.5)
@@ -23,6 +28,7 @@ class Snake():
         #self.body.append(self.head)
         head_segment = Segment(position, index=f'{self.name}:head', color=self.head_color, size=self.size)
         self.body = [ head_segment ]
+        self.status = STATUS_ALIVE
         
     def draw(self):
         for i, segment in enumerate(self.body):
@@ -74,6 +80,20 @@ class Snake():
     def y(self):
         return self.head.y if self.head else None     
 
+    def die(self):
+        self.status = STATUS_DEAD
+
+    def collide_vs_snake(self, target):
+        if isinstance(target, Snake):
+            for segment in target.body:
+                if self.head.position == segment.position:
+                    return True
+                
+        return False
+
+    def move(self):
+        self.update()
+
     def update(self):
         self._update_body_by_insert()
         self._update_head()
@@ -95,22 +115,18 @@ class Snake():
     def _update_head(self):
         if self.direction == DIRECTION_LEFT:
             self.head.x += -self.step
-            #self.head.y += 0
         elif self.direction == DIRECTION_RIGHT:
             self.head.x += self.step
-            #self.head.y += 0
         elif self.direction == DIRECTION_UP:
-            #self.head.x += 0
             self.head.y += -self.step      
         elif self.direction == DIRECTION_DOWN:
-            #self.head.x += 0
             self.head.y += self.step
 
         #check border collisions and wraparound
-        if self.head.x >= WINDOW.get_size()[0]: self.head.x = 0
-        if self.head.x < 0: self.head.x = WINDOW.get_size()[0] - self.step
-        if self.head.y >= WINDOW.get_size()[1]: self.head.y = 0
-        if self.head.y < 0: self.head.y = WINDOW.get_size()[1] - self.step
+        if self.head.x >= pygame.display.get_surface().get_size()[0]: self.head.x = 0
+        if self.head.x < 0: self.head.x = pygame.display.get_surface().get_size()[0] - self.step
+        if self.head.y >= pygame.display.get_surface().get_size()[1]: self.head.y = 0
+        if self.head.y < 0: self.head.y = pygame.display.get_surface().get_size()[1] - self.step
 
     def _info_str(self) -> str:
         s = ''
