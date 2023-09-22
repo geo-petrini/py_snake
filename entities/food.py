@@ -6,12 +6,10 @@ from entities.globals import *
 
 class Food():
 
-    def __init__(self, position, color=FOOD_COLOR, size=BLOCK_SIZE):
+    def __init__(self, position, color=GameColor.FOOD_COLOR):
         self.color = color
         self.position = position
-        self.size = size
-        self.width = self.size
-        self.height = self.size        
+      
         #self.surface = Surface((self.width+self.width//3, self.height+self.height//3))
         #self.surface.set_colorkey((0, 0, 0))
         #self.surface.fill(color)
@@ -39,6 +37,16 @@ class Food():
     def center(self):
         return ( self.x+self.width//2, self.y+self.height//2 )
 
+    @property
+    def size(self):
+        return GameConfig.BLOCK_SIZE
+    @property
+    def width(self):
+        return GameConfig.BLOCK_SIZE
+    @property
+    def height(self):
+        return GameConfig.BLOCK_SIZE
+
     def draw(self):
         #self.OLD__draw_rotating_surface()
         self.__draw_rotating_surface()
@@ -50,7 +58,7 @@ class Food():
             self.frame = 0
             '''
         
-        pygame.draw.rect(pygame.display.get_surface(), self.color,[self.x, self.y, self.size, self.size])
+        pygame.draw.rect(GameConfig.WINDOW, self.color,[self.x, self.y, self.size, self.size])
 
     def OLD__draw_rotating_surface(self):
         self.rect = self.surface.get_rect()
@@ -61,7 +69,7 @@ class Food():
         new = transform.rotate(self.surface, self.rotation)
         self.rect = new.get_rect()
         self.rect.center = old_center
-        pygame.display.get_surface().blit(new, self.rect)   
+        GameConfig.WINDOW.blit(new, self.rect)   
 
     def __draw_rotating_surface(self):
         image = pygame.Surface((self.width+self.width//3, self.height+self.height//3), pygame.SRCALPHA)
@@ -70,21 +78,15 @@ class Food():
         x = 0
         y = 0
         self.rotation = self.rotation + 2
-        #blit_rotate_center(pygame.display.get_surface(), s, (self.x, self.x), self.rotation)
-        #w, h = pygame.display.get_surface().get_size()
-        #new_surf, new_rect = rot_center(s, self.rotation, 0,0)
-        # r = s.get_rect()
-        #r.center = (self.x + self.size//2, self.y + self.size//2)    
-    
-        #old_center = r.center
+
         rotated_image = pygame.transform.rotate(image, self.rotation)
         new_rect = rotated_image.get_rect(center = image.get_rect().center)
         new_rect.center = ( self.x+self.width//2, self.y+self.height//2 )
         new_rect.center = self.center
-        pygame.display.get_surface().blit(rotated_image, new_rect.topleft)          
+        GameConfig.WINDOW.blit(rotated_image, new_rect.topleft)          
 
     def reload(self):
-        (w, h) = pygame.display.get_surface().get_size()
+        (w, h) = GameConfig.WINDOW.get_size()
         self.position.x = round(random.randrange(0, w - self.size) / self.size) * self.size
         self.position.y = round(random.randrange(0, h - self.size) / self.size) * self.size
         #logging.debug(f'{self}')

@@ -4,15 +4,23 @@ from entities.position import *
 
 class Segment():
     _position = None
-    def __init__(self, position, index = None, size=10, color=pygame.Color("darkgray")):
+    def __init__(self, position, index = None, color=pygame.Color("darkgray")):
         self.color = color
-        self.size = size
         self.index = index
         self.position = position    #uses @position.setter which does a deep copy
         #logging.debug(f'{self}')
+    @property
+    def size(self):
+        return GameConfig.BLOCK_SIZE
+    @property
+    def width(self):
+        return GameConfig.BLOCK_SIZE
+    @property
+    def height(self):
+        return GameConfig.BLOCK_SIZE
 
     def draw(self, direction=None):
-        pygame.draw.rect(pygame.display.get_surface(), self.color, [self.x, self.y, self.size, self.size])
+        pygame.draw.rect(GameConfig.WINDOW, self.color, [self.x, self.y, self.size, self.size])
         if self.index != None and 'head' in self.index:
             self.__render_head(direction)
 
@@ -66,7 +74,7 @@ class Segment():
                 new = pygame.transform.rotate(head_surface, -90*3)
             #pygame.transform.rotate(head_surface, angle)
             draw_area = head_surface.get_rect().move(self.x, self.y)        
-            pygame.display.get_surface().blit(new, draw_area)
+            GameConfig.WINDOW.blit(new, draw_area)
 
     @property
     def position(self):

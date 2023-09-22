@@ -6,6 +6,7 @@ from pygame import Surface, transform, Rect
 import pygame_gui
 import logging
 import random
+import math
 import logmanager
 
 from entities.globals import *
@@ -22,7 +23,7 @@ logmanager.get_configured_logger()
 class Game():
 
     def __init__(self):
-        global WINDOW
+        
         self.window_width = 800
         self.window_height = 600
         
@@ -37,15 +38,15 @@ class Game():
 
         pygame.init()
 
-        WINDOW = pygame.display.set_mode((self.window_width, self.window_height))
+        self.setup_window_size()
         
-        self.__ui_manager = pygame_gui.UIManager(WINDOW.get_size())
+        self.__ui_manager = pygame_gui.UIManager(GameConfig.WINDOW.get_size())
         self.__ui_manager.set_visual_debug_mode(True)
         #pygame.display.update()
         pygame.display.set_caption('Snake game')
 
 
-        pygame.time.set_timer(TIMER_TICK_EVENT, 1000)
+        pygame.time.set_timer(GameConfig.TIMER_TICK_EVENT, 1000)
         self.countdown_timer = 5
 
         try:
@@ -54,30 +55,31 @@ class Game():
         except:
             pass
 
-    def NOT_IMPLEMENTED__calc_window_size():
-        global BLOCK_SIZE
+    def setup_window_size(self):
         #min size 800x600
-        #min blocks 21x21
+        #min blocks 35x35
         #max size screen width height
         #window must be multiple of BLOCK_SIZE
         screen_info = pygame.display.Info() #Required to set a good resolution for the game screen
         screen_width = screen_info.current_w
         screen_height = screen_info.current_h
         first_screen = (screen_width, screen_height) #Take 120 pixels from the height because the menu bar, window bar and dock takes space 
-        if screen_width < 800 or screen_height < 600:
-            pygame.QUIT
+        
+        min_screen_size = min(screen_height, screen_width)
+        if min_screen_size <= 600:
+            max_block_size = math.floor(min_screen_size //  GameConfig.GRID_SIZE)
+            GameConfig.BLOCK_SIZE = max_block_size
+            self.window_width =  GameConfig.BLOCK_SIZE *  GameConfig.GRID_SIZE
+            self.window_height =  GameConfig.BLOCK_SIZE *  GameConfig.GRID_SIZE
 
-        if screen_width == 800 and screen_height == 600:
-            #adjust block size so that min blocks 21x21 is satisfied
-            pass
-
-        #check if min blocks 21x21 is < thand screen size
-
-        #else
-        width = BLOCK_SIZE * 21
-        height = BLOCK_SIZE * 21
-
-
+        else:
+            max_block_size = math.floor(min_screen_size //  GameConfig.GRID_SIZE)
+            GameConfig.BLOCK_SIZE = max_block_size
+            self.window_width =  GameConfig.BLOCK_SIZE *  GameConfig.GRID_SIZE
+            self.window_height =  GameConfig.BLOCK_SIZE *  GameConfig.GRID_SIZE
+        
+        GameConfig.WINDOW = pygame.display.set_mode((self.window_width, self.window_height))
+        logging.debug(f'grid: { GameConfig.GRID_SIZE}, block: { GameConfig.BLOCK_SIZE}, w: {self.window_width}, h: {self.window_height}, sw: {screen_width}, sh: {screen_height}')
     
     @property
     def width(self):
@@ -98,7 +100,8 @@ class Game():
     def add_snakes(self, n = 1):
         for i in range(n):
             index = i+1
-            color = globals()[f'SNAKE_{index}_COLOR'] if f'SNAKE_{index}_COLOR' in globals() else DEBUG_COLOR
+            
+            color = vars(GameColor)[f'SNAKE_{index}_COLOR'] if f'SNAKE_{index}_COLOR' in vars(GameColor) else GameColor.DEBUG_COLOR
             #head_color = color.correct_gamma(0.5) #globals()[f'SNAKE_{index}_HEAD_COLOR'] if f'SNAKE_{index}_HEAD_COLOR' in globals() else DEBUG_COLOR
             name = f'Player {index}'
             # x = window.get_size()[0]//2 + index * BLOCK_SIZE * 2
@@ -120,37 +123,37 @@ class Game():
         1   2  
           4
         '''
-        surface_width = WINDOW.get_size()[0]
-        surface_height = WINDOW.get_size()[1]
+        surface_width = GameConfig.WINDOW.get_size()[0]
+        surface_height = GameConfig.WINDOW.get_size()[1]
         if index == 1:
-            x = surface_width//2 - 3*BLOCK_SIZE 
-            y = surface_height//2
+            x = (GameConfig.GRID_SIZE //2 - 3) * GameConfig.BLOCK_SIZE
+            y = (GameConfig.GRID_SIZE //2 +1) * GameConfig.BLOCK_SIZE
             direction = DIRECTION_LEFT
 
         if index == 2:
-            x = surface_width//2 + 3*BLOCK_SIZE 
-            y = surface_height//2
+            x = (GameConfig.GRID_SIZE //2 + 3) * GameConfig.BLOCK_SIZE
+            y = (GameConfig.GRID_SIZE //2 -1) * GameConfig.BLOCK_SIZE
             direction = DIRECTION_RIGHT    
 
         if index == 3:
-            x = surface_width//2
-            y = surface_height//2 - 3*BLOCK_SIZE 
+            x = (GameConfig.GRID_SIZE //2 -1 ) * GameConfig.BLOCK_SIZE            
+            y = (GameConfig.GRID_SIZE //2 -3) * GameConfig.BLOCK_SIZE
             direction = DIRECTION_UP           
 
         if index == 4:
-            x = surface_width//2 
-            y = surface_height//2 + 3*BLOCK_SIZE 
+            x = (GameConfig.GRID_SIZE //2 +1) * GameConfig.BLOCK_SIZE            
+            y = (GameConfig.GRID_SIZE //2 +3) * GameConfig.BLOCK_SIZE
             direction = DIRECTION_DOWN
 
         logging.debug(f'{index}, position: {x},{y}, direction: {direction}, screen {surface_width},{surface_height}')
         return ( Position(x, y), direction  )            
 
     def add_food(self, items = 1):
-        (w, h) = WINDOW.get_size()
+        (w, h) = GameConfig.WINDOW.get_size()
         
         for _ in range(items):
-            foodx = round(random.randrange(0, w - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
-            foody = round(random.randrange(0, h - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
+            foodx = round(random.randrange(0, w - GameConfig.BLOCK_SIZE) // GameConfig.BLOCK_SIZE) * GameConfig.BLOCK_SIZE
+            foody = round(random.randrange(0, h - GameConfig.BLOCK_SIZE) // GameConfig.BLOCK_SIZE) * GameConfig.BLOCK_SIZE
 
             f = Food( position=Position(foodx, foody) ) 
             self.foods.append(f)
@@ -177,38 +180,38 @@ class Game():
     def _display_pause(self):
         if self.__pause:
             font = pygame.font.Font('./asset/Fipps-Regular.otf', 32)
-            pause_text = font.render('PAUSE', True, FONT_COLOR)
+            pause_text = font.render('PAUSE', True, GameColor.FONT_COLOR)
             pause_text_rect = pause_text.get_rect()
             pause_text_rect.center = (self.width//2, self.height//2)
-            WINDOW.blit(pause_text, pause_text_rect)
+            GameConfig.WINDOW.blit(pause_text, pause_text_rect)
 
     def _display_helpers(self, s, f):
         if s.x == f.x or s.y == f.y:
             if s.x == f.x:
                 if s.y < f.y:
-                    helpery = s.y + BLOCK_SIZE 
+                    helpery = s.y + GameConfig.BLOCK_SIZE 
                 else:
-                    helpery = f.y + BLOCK_SIZE 
+                    helpery = f.y + GameConfig.BLOCK_SIZE 
 
                 if s.y < f.y:
                     helperh = f.y - helpery 
                 else:
                     helperh = s.y - helpery 
                 helperx = s.x
-                helperw = BLOCK_SIZE
+                helperw = GameConfig.BLOCK_SIZE
 
             if s.y == f.y:
                 if s.x < f.x:
-                    helperx = s.x + BLOCK_SIZE  
+                    helperx = s.x + GameConfig.BLOCK_SIZE  
                 else:
-                    helperx = f.x + BLOCK_SIZE  
+                    helperx = f.x + GameConfig.BLOCK_SIZE  
 
                 if s.x < f.x:
                     helperw = f.x - helperx 
                 else:
                     helperw = s.x - helperx 
                 helpery = s.y
-                helperh = BLOCK_SIZE            
+                helperh = GameConfig.BLOCK_SIZE            
 
             '''
             helperx = min(s.x, f.x)
@@ -217,34 +220,34 @@ class Game():
             helperh = max(max(s.y, f.y) - helpery, BLOCK_SIZE)
             '''
             #logging.debug(f'helpers: x: {helperx}, y: {helpery}, w: {helperw}, h: {helperh}')
-            pygame.draw.rect(WINDOW, HELPER_COLOR, [helperx, helpery, helperw, helperh], 3)
+            pygame.draw.rect(GameConfig.WINDOW, GameColor.HELPER_COLOR, [helperx, helpery, helperw, helperh], 3)
         
     def _display_countdown(self):
         font = pygame.font.Font('./asset/Fipps-Regular.otf', 32)
         if self.countdown_timer > 0:
-            countdown_text = font.render(f'{ self.countdown_timer }', True, FONT_COLOR)
+            countdown_text = font.render(f'{ self.countdown_timer }', True, GameColor.FONT_COLOR)
             countdown_text_rect = countdown_text.get_rect()
             countdown_text_rect.center = (self.width//2, self.height//2)
-            WINDOW.blit(countdown_text, countdown_text_rect)        
+            GameConfig.WINDOW.blit(countdown_text, countdown_text_rect)        
 
     def _display_score(self):
         font = pygame.font.Font('./asset/Fipps-Regular.otf', 32)
         for i, s in enumerate(self.snakes):
             score_text = font.render(f'{ (s.lenght-1) * 10 }', True, s.color)
             #score_text_rect = score_text.get_rect()
-            WINDOW.blit(score_text, ( 20, 10 +(i*50)) )
+            GameConfig.WINDOW.blit(score_text, ( 20, 10 +(i*50)) )
 
     def _display_grid(self):
-        for x in range(0, WINDOW.get_size()[0], BLOCK_SIZE ):
-            for y in range(0, WINDOW.get_size()[1], BLOCK_SIZE):
+        for x in range(0, GameConfig.WINDOW.get_size()[0], GameConfig.BLOCK_SIZE ):
+            for y in range(0, GameConfig.WINDOW.get_size()[1], GameConfig.BLOCK_SIZE):
                 width = 3 if ((x % 100 == 0) and (y % 100 == 0)) else 1
-                pygame.draw.line(WINDOW, pygame.Color('gray30'), (x, 0), (x, WINDOW.get_size()[1]), width)
-                pygame.draw.line(WINDOW, pygame.Color('gray30'), (0, y), (WINDOW.get_size()[0], y), width)
+                pygame.draw.line(GameConfig.WINDOW, pygame.Color('gray30'), (x, 0), (x, GameConfig.WINDOW.get_size()[1]), width)
+                pygame.draw.line(GameConfig.WINDOW, pygame.Color('gray30'), (0, y), (GameConfig.WINDOW.get_size()[0], y), width)
 
     def _display_mouse_coordinates(self):
         font = pygame.font.Font('./asset/Fipps-Regular.otf', 18)
-        mouse_text = font.render(f'{ pygame.mouse.get_pos() }', True, DEBUG_COLOR)
-        WINDOW.blit(mouse_text, ( pygame.mouse.get_pos() )) 
+        mouse_text = font.render(f'{ pygame.mouse.get_pos() }', True, GameColor.DEBUG_COLOR)
+        GameConfig.WINDOW.blit(mouse_text, ( pygame.mouse.get_pos() )) 
 
     def _display_time(self, t):
     # change milliseconds into minutes, seconds, milliseconds
@@ -255,14 +258,14 @@ class Game():
         #t_string = f'{t_minutes}:{t_seconds}:{t_millisecond}'
         t_string = f'{t}'
         font = pygame.font.Font('./asset/Fipps-Regular.otf', 18)
-        t_string_rect = font.render( t_string, True, DEBUG_COLOR)
-        WINDOW.blit(t_string_rect, (WINDOW.get_size()[0]//2, WINDOW.get_size()[1]//2-30))     
+        t_string_rect = font.render( t_string, True, GameColor.DEBUG_COLOR)
+        GameConfig.WINDOW.blit(t_string_rect, (GameConfig.WINDOW.get_size()[0]//2, GameConfig.WINDOW.get_size()[1]//2-30))     
 
     def _display_debug_info(self, objects):
         font = pygame.font.Font('./asset/Fipps-Regular.otf', 18)
         for i, o in enumerate(objects):
-            text = font.render(f'{ o.position }', True, o.color if o.color else DEBUG_COLOR)
-            WINDOW.blit(text, ( 100, 20+(i*24) ))    
+            text = font.render(f'{ o.position }', True, o.color if o.color else GameColor.DEBUG_COLOR)
+            GameConfig.WINDOW.blit(text, ( 100, 20+(i*24) ))    
 
     def _print_debug_info(self, objects):
         for i, o in enumerate(objects):
@@ -307,7 +310,7 @@ class Game():
                 if event.key == pygame.K_ESCAPE:
                     self.__game_over = True 
             
-            if event.type == TIMER_TICK_EVENT:
+            if event.type == GameConfig.TIMER_TICK_EVENT:
                 if self.countdown_timer > 0: self.countdown_timer -= 1
              
             self.__ui_manager.process_events(event)        
@@ -317,8 +320,8 @@ class Game():
         start_time = pygame.time.get_ticks() 
 
         while not self.__game_over:
-            time_delta = clock.tick(FPS)
-            WINDOW.fill(BACKGROUND_COLOR)
+            time_delta = clock.tick(GameConfig.FPS)
+            GameConfig.WINDOW.fill(GameColor.BACKGROUND_COLOR)
             self._handle_events()
             
             if self.countdown_timer == 5 and not self.__game_initialized:
@@ -356,7 +359,7 @@ class Game():
             self._display_countdown()
             
             self.__ui_manager.update(time_delta)
-            self.__ui_manager.draw_ui(WINDOW)
+            self.__ui_manager.draw_ui(GameConfig.WINDOW)
             pygame.display.update()
 
         pygame.quit()

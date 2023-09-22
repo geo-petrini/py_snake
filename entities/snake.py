@@ -11,12 +11,10 @@ class Snake():
 
     direction = None
 
-    size = BLOCK_SIZE
-    step = BLOCK_SIZE
     lenght = 1
     body = None
 
-    def __init__(self, position, color=SNAKE_1_COLOR, head_color=None, name='Player 1', keys={'left':None, 'right':None}, direction=None):
+    def __init__(self, position, color=GameColor.SNAKE_1_COLOR, head_color=None, name='Player 1', keys={'left':None, 'right':None}, direction=None):
         self.status = STATUS_INIT
         self.name = name
         self.color = color
@@ -24,21 +22,19 @@ class Snake():
         self.left_key = keys['left']
         self.right_key = keys['right']
         self.direction = direction
-        #self.head = SnakeSegment(position, color=self.head_color, size=self.size)
-        #self.body.append(self.head)
-        head_segment = Segment(position, index=f'{self.name}:head', color=self.head_color, size=self.size)
-        self.body = [ head_segment ]
+        
+        self.body = []
+        self._add_head(position)
         self.status = STATUS_ALIVE
         
+    def _add_head(self, position):
+        head_segment = Segment(position, index=f'{self.name}:head', color=self.head_color)
+        self.body.append( head_segment )
+
     def draw(self):
-        for i, segment in enumerate(self.body):
-            segment.draw(self.direction)
-            #if i == 0:
-            #    pygame.draw.rect(DISPLAY, self.head_color, [segment.x, segment.y, self.size, self.size])
-            #else:
-            #    pygame.draw.rect(DISPLAY, self.color, [segment.x, segment.y, self.size, self.size])
-            #DISPLAY.fill(self.color,  [segment.x, segment.y, self.size, self.size])
-            #pygame.draw.rect(DISPLAY, segment.color, [segment.x, segment.y, segment.size, segment.size])
+        if len(self.body) > 0:
+            for i, segment in enumerate(self.body):
+                segment.draw(self.direction)
 
     def set_direction(self, direction):
         self.direction = direction
@@ -78,7 +74,15 @@ class Snake():
 
     @property
     def y(self):
-        return self.head.y if self.head else None     
+        return self.head.y if self.head else None    
+
+    @property
+    def size(self):
+        return GameConfig.BLOCK_SIZE
+
+    @property
+    def step(self):
+        return GameConfig.BLOCK_SIZE
 
     def die(self):
         self.status = STATUS_DEAD
@@ -104,7 +108,7 @@ class Snake():
         head will be moved afterwards
         extra tailing body segments will be cut at lenght
         '''
-        new_segment = Segment( self.position, color=self.color, size=self.size )
+        new_segment = Segment( self.position, color=self.color)
         self.body.insert(1, new_segment )
         #logging.debug(f'{self}')
         if len(self.body) > self.lenght:
