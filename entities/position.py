@@ -1,3 +1,5 @@
+from entities.globals import *
+
 class Position():
     x = None
     y = None
@@ -21,3 +23,13 @@ class Position():
 
     def as_tuple(self):
         return (self.x, self.y)
+    
+    @property
+    def grid_x(self):
+        #pixel position / Block size
+        return self.x / GameConfig.BLOCK_SIZE
+
+    @property
+    def grid_y(self):
+        #pixel position / Block size
+        return self.y / GameConfig.BLOCK_SIZE        

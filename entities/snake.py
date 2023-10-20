@@ -33,7 +33,8 @@ class Snake():
 
     def draw(self):
         if len(self.body) > 0:
-            for i, segment in enumerate(self.body):
+            #paint in reverse so that head is drawn last, this allows it to be displayed above the other segments in case of overlapping
+            for i, segment in enumerate(reversed(self.body)):
                 segment.draw(self.direction)
 
     def set_direction(self, direction):
@@ -63,7 +64,7 @@ class Snake():
             return self.body[0]
         else:
             return None
-
+        
     @property
     def position(self):
         return self.head.position if self.head else None

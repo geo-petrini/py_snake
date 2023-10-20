@@ -4,6 +4,9 @@ import logging
 import random
 from entities.globals import *
 
+STATUS_AVAILABLE = 0
+STATUS_EATEN = 1
+
 class Food():
 
     def __init__(self, position, color=GameColor.FOOD_COLOR):
@@ -14,8 +17,9 @@ class Food():
         #self.surface.set_colorkey((0, 0, 0))
         #self.surface.fill(color)
         #self.rect = self.surface.get_rect() 
-        self.rotation = 0        
+        self.rotation = 0
         #logging.debug(f'{self}')
+        self.status = STATUS_AVAILABLE
    
     @property
     def x(self):
@@ -85,11 +89,11 @@ class Food():
         new_rect.center = self.center
         GameConfig.WINDOW.blit(rotated_image, new_rect.topleft)          
 
-    def reload(self):
+    def reseet(self):
         (w, h) = GameConfig.WINDOW.get_size()
         self.position.x = round(random.randrange(0, w - self.size) / self.size) * self.size
         self.position.y = round(random.randrange(0, h - self.size) / self.size) * self.size
-        #logging.debug(f'{self}')
+        logging.info(f'position reset {self}')
 
     def _info_str(self) -> str:
         return f'{self.__class__.__name__}({self.position})'

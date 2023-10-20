@@ -10,7 +10,7 @@ import math
 import logmanager
 
 from entities.globals import *
-from entities.food import Food
+from entities.food import *
 from entities.snake import *
 from entities.position import Position
 
@@ -19,6 +19,25 @@ from entities.position import Position
 #logging.basicConfig(datefmt='%Y-%m-%d %H:%M:%S', format='[%(asctime)s][%(levelname)s] %(message)s', level=logging.DEBUG, stream=sys.stdout)
 #logging.basicConfig(datefmt='%Y-%m-%d %H:%M:%S', format='%(asctime)s %(levelname)s %(process)s %(thread)s %(filename)s %(funcName)s():%(lineno)d %(message)s', level=logging.DEBUG, stream=sys.stdout)
 logmanager.get_configured_logger()
+
+def rot_center(image, angle, x, y):
+    
+    rotated_image = pygame.transform.rotate(image, angle)
+    new_rect = rotated_image.get_rect(center = image.get_rect(center = (x, y)).center)
+
+    return rotated_image, new_rect
+
+def blit_rotate_center(surf, image, topleft, angle):
+
+    rotated_image = pygame.transform.rotate(image, angle)
+    new_rect = rotated_image.get_rect(center = image.get_rect(topleft = topleft).center)
+
+    surf.blit(rotated_image, new_rect.topleft)
+
+def _test_snake_add_lenght(snake: Snake, len: int):
+    for _ in range(len):    
+        snake.eat()
+
 
 class Game():
 
@@ -36,9 +55,12 @@ class Game():
         self.__foods = []
         self.__players_number = 4
 
+        self.__matrix = None
+
         pygame.init()
 
         self.setup_window_size()
+        self.init_matrix()
         
         self.__ui_manager = pygame_gui.UIManager(GameConfig.WINDOW.get_size())
         self.__ui_manager.set_visual_debug_mode(True)
@@ -170,7 +192,7 @@ class Game():
             if item.position == target.position:
                 item.eat()
                 logging.debug(f'eat: {item}, {target}')
-                target.reload()
+                target.status = STATUS_EATEN
 
         if isinstance(item, Snake) and isinstance(target, Snake) :
             if item.collide_vs_snake(target):
@@ -262,10 +284,22 @@ class Game():
         GameConfig.WINDOW.blit(t_string_rect, (GameConfig.WINDOW.get_size()[0]//2, GameConfig.WINDOW.get_size()[1]//2-30))     
 
     def _display_debug_info(self, objects):
-        font = pygame.font.Font('./asset/Fipps-Regular.otf', 18)
+        
         for i, o in enumerate(objects):
+            font = pygame.font.Font('./asset/Fipps-Regular.otf', 10)
             text = font.render(f'{ o.position }', True, o.color if o.color else GameColor.DEBUG_COLOR)
-            GameConfig.WINDOW.blit(text, ( 100, 20+(i*24) ))    
+            GameConfig.WINDOW.blit(text, ( 100, 20+(i*24) ))
+
+            if isinstance(o, Snake):
+                font = pygame.font.Font('./asset/Fipps-Regular.otf', 8)
+                for sn, segment in enumerate(o.body):
+                    if sn == 0:
+                        text = font.render(f'{segment.x}\n{segment.y}', True, o.color if o.color else GameColor.DEBUG_COLOR)
+                    else:
+                        text = font.render(f'{segment.x}\n{segment.y}', True, o.head_color if o.head_color else GameColor.DEBUG_COLOR)
+                    GameConfig.WINDOW.blit(text, ( segment.x, segment.y ))                    
+
+        
 
     def _print_debug_info(self, objects):
         for i, o in enumerate(objects):
@@ -315,6 +349,24 @@ class Game():
              
             self.__ui_manager.process_events(event)        
 
+    def init_matrix(self):
+        #TODO move to GameConfig
+        filler = None
+        cols = GameConfig.GRID_SIZE
+        rows = GameConfig.GRID_SIZE
+        self.__matrix = [[filler for c in range(cols)] for r in range(rows)]
+
+    def update_matrix(self):
+        #TODO move to GameConfig
+        self.init_matrix()
+
+        for snake in self.snakes:
+            for segment in snake.body:
+                self.__matrix[segment.gx][segment.gy] = 's'
+        for food in self.foods:
+            self.__matrix[food.position.gx][food.position.gy] = 'f'
+        
+
     def start(self):
         clock = pygame.time.Clock()
         start_time = pygame.time.get_ticks() 
@@ -327,6 +379,9 @@ class Game():
             if self.countdown_timer == 5 and not self.__game_initialized:
                 self.add_snakes( self.__players_number )
                 self.add_food( self.__players_number )
+
+                _test_snake_add_lenght(self.snakes[0], 50)
+                _test_snake_add_lenght(self.snakes[1], 20)
                 self.__game_initialized = True
 
             self._display_score()
@@ -350,6 +405,11 @@ class Game():
                 if snake.status == STATUS_DEAD:
                     self.snakes.remove(snake)
 
+            for food in self.foods:
+                if food.status == STATUS_EATEN:
+                    self.foods.remove(food)
+                    self.add_food()
+
             if self.__display_debug:
                 self._display_grid()
                 self._display_mouse_coordinates()
@@ -364,18 +424,4 @@ class Game():
 
         pygame.quit()
         quit()    
-
-def rot_center(image, angle, x, y):
-    
-    rotated_image = pygame.transform.rotate(image, angle)
-    new_rect = rotated_image.get_rect(center = image.get_rect(center = (x, y)).center)
-
-    return rotated_image, new_rect
-
-def blit_rotate_center(surf, image, topleft, angle):
-
-    rotated_image = pygame.transform.rotate(image, angle)
-    new_rect = rotated_image.get_rect(center = image.get_rect(topleft = topleft).center)
-
-    surf.blit(rotated_image, new_rect.topleft)
 

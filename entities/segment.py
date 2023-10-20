@@ -95,7 +95,7 @@ class Segment():
     @property
     def y(self):
         return self.position.y if self.position else None
-
+    
     @x.setter
     def x(self, value):
         #logging.debug(f'{self} new x {value}')
