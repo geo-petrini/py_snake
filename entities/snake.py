@@ -79,11 +79,11 @@ class Snake():
 
     @property
     def size(self):
-        return GameConfig.BLOCK_SIZE
+        return Grid.BLOCK_SIZE
 
     @property
     def step(self):
-        return GameConfig.BLOCK_SIZE
+        return Grid.BLOCK_SIZE
 
     def die(self):
         self.status = STATUS_DEAD

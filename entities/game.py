@@ -60,7 +60,7 @@ class Game():
         pygame.init()
 
         self.setup_window_size()
-        self.init_matrix()
+        Grid.initialize()
         
         self.__ui_manager = pygame_gui.UIManager(GameConfig.WINDOW.get_size())
         self.__ui_manager.set_visual_debug_mode(True)
@@ -89,19 +89,19 @@ class Game():
         
         min_screen_size = min(screen_height, screen_width)
         if min_screen_size <= 600:
-            max_block_size = math.floor(min_screen_size //  GameConfig.GRID_SIZE)
-            GameConfig.BLOCK_SIZE = max_block_size
-            self.window_width =  GameConfig.BLOCK_SIZE *  GameConfig.GRID_SIZE
-            self.window_height =  GameConfig.BLOCK_SIZE *  GameConfig.GRID_SIZE
+            max_block_size = math.floor(min_screen_size //  Grid.GRID_SIZE)
+            Grid.BLOCK_SIZE = max_block_size
+            self.window_width =  Grid.BLOCK_SIZE *  Grid.GRID_SIZE
+            self.window_height =  Grid.BLOCK_SIZE *  Grid.GRID_SIZE
 
         else:
-            max_block_size = math.floor(min_screen_size //  GameConfig.GRID_SIZE)
-            GameConfig.BLOCK_SIZE = max_block_size
-            self.window_width =  GameConfig.BLOCK_SIZE *  GameConfig.GRID_SIZE
-            self.window_height =  GameConfig.BLOCK_SIZE *  GameConfig.GRID_SIZE
+            max_block_size = math.floor(min_screen_size //  Grid.GRID_SIZE)
+            Grid.BLOCK_SIZE = max_block_size
+            self.window_width =  Grid.BLOCK_SIZE *  Grid.GRID_SIZE
+            self.window_height =  Grid.BLOCK_SIZE *  Grid.GRID_SIZE
         
         GameConfig.WINDOW = pygame.display.set_mode((self.window_width, self.window_height))
-        logging.debug(f'grid: { GameConfig.GRID_SIZE}, block: { GameConfig.BLOCK_SIZE}, w: {self.window_width}, h: {self.window_height}, sw: {screen_width}, sh: {screen_height}')
+        logging.debug(f'grid: { Grid.GRID_SIZE}, block: { Grid.BLOCK_SIZE}, w: {self.window_width}, h: {self.window_height}, sw: {screen_width}, sh: {screen_height}')
     
     @property
     def width(self):
@@ -148,23 +148,23 @@ class Game():
         surface_width = GameConfig.WINDOW.get_size()[0]
         surface_height = GameConfig.WINDOW.get_size()[1]
         if index == 1:
-            x = (GameConfig.GRID_SIZE //2 - 3) * GameConfig.BLOCK_SIZE
-            y = (GameConfig.GRID_SIZE //2 +1) * GameConfig.BLOCK_SIZE
+            x = (Grid.GRID_SIZE //2 - 3) * Grid.BLOCK_SIZE
+            y = (Grid.GRID_SIZE //2 +1) * Grid.BLOCK_SIZE
             direction = DIRECTION_LEFT
 
         if index == 2:
-            x = (GameConfig.GRID_SIZE //2 + 3) * GameConfig.BLOCK_SIZE
-            y = (GameConfig.GRID_SIZE //2 -1) * GameConfig.BLOCK_SIZE
+            x = (Grid.GRID_SIZE //2 + 3) * Grid.BLOCK_SIZE
+            y = (Grid.GRID_SIZE //2 -1) * Grid.BLOCK_SIZE
             direction = DIRECTION_RIGHT    
 
         if index == 3:
-            x = (GameConfig.GRID_SIZE //2 -1 ) * GameConfig.BLOCK_SIZE            
-            y = (GameConfig.GRID_SIZE //2 -3) * GameConfig.BLOCK_SIZE
+            x = (Grid.GRID_SIZE //2 -1 ) * Grid.BLOCK_SIZE            
+            y = (Grid.GRID_SIZE //2 -3) * Grid.BLOCK_SIZE
             direction = DIRECTION_UP           
 
         if index == 4:
-            x = (GameConfig.GRID_SIZE //2 +1) * GameConfig.BLOCK_SIZE            
-            y = (GameConfig.GRID_SIZE //2 +3) * GameConfig.BLOCK_SIZE
+            x = (Grid.GRID_SIZE //2 +1) * Grid.BLOCK_SIZE            
+            y = (Grid.GRID_SIZE //2 +3) * Grid.BLOCK_SIZE
             direction = DIRECTION_DOWN
 
         logging.debug(f'{index}, position: {x},{y}, direction: {direction}, screen {surface_width},{surface_height}')
@@ -174,8 +174,11 @@ class Game():
         (w, h) = GameConfig.WINDOW.get_size()
         
         for _ in range(items):
-            foodx = round(random.randrange(0, w - GameConfig.BLOCK_SIZE) // GameConfig.BLOCK_SIZE) * GameConfig.BLOCK_SIZE
-            foody = round(random.randrange(0, h - GameConfig.BLOCK_SIZE) // GameConfig.BLOCK_SIZE) * GameConfig.BLOCK_SIZE
+            while True:
+                foodx = round(random.randrange(0, w - Grid.BLOCK_SIZE) // Grid.BLOCK_SIZE) * Grid.BLOCK_SIZE
+                foody = round(random.randrange(0, h - Grid.BLOCK_SIZE) // Grid.BLOCK_SIZE) * Grid.BLOCK_SIZE
+                if Grid.get_item(foodx, foody) == None:
+                    break
 
             f = Food( position=Position(foodx, foody) ) 
             self.foods.append(f)
@@ -211,29 +214,29 @@ class Game():
         if s.x == f.x or s.y == f.y:
             if s.x == f.x:
                 if s.y < f.y:
-                    helpery = s.y + GameConfig.BLOCK_SIZE 
+                    helpery = s.y + Grid.BLOCK_SIZE 
                 else:
-                    helpery = f.y + GameConfig.BLOCK_SIZE 
+                    helpery = f.y + Grid.BLOCK_SIZE 
 
                 if s.y < f.y:
                     helperh = f.y - helpery 
                 else:
                     helperh = s.y - helpery 
                 helperx = s.x
-                helperw = GameConfig.BLOCK_SIZE
+                helperw = Grid.BLOCK_SIZE
 
             if s.y == f.y:
                 if s.x < f.x:
-                    helperx = s.x + GameConfig.BLOCK_SIZE  
+                    helperx = s.x + Grid.BLOCK_SIZE  
                 else:
-                    helperx = f.x + GameConfig.BLOCK_SIZE  
+                    helperx = f.x + Grid.BLOCK_SIZE  
 
                 if s.x < f.x:
                     helperw = f.x - helperx 
                 else:
                     helperw = s.x - helperx 
                 helpery = s.y
-                helperh = GameConfig.BLOCK_SIZE            
+                helperh = Grid.BLOCK_SIZE            
 
             '''
             helperx = min(s.x, f.x)
@@ -260,8 +263,8 @@ class Game():
             GameConfig.WINDOW.blit(score_text, ( 20, 10 +(i*50)) )
 
     def _display_grid(self):
-        for x in range(0, GameConfig.WINDOW.get_size()[0], GameConfig.BLOCK_SIZE ):
-            for y in range(0, GameConfig.WINDOW.get_size()[1], GameConfig.BLOCK_SIZE):
+        for x in range(0, GameConfig.WINDOW.get_size()[0], Grid.BLOCK_SIZE ):
+            for y in range(0, GameConfig.WINDOW.get_size()[1], Grid.BLOCK_SIZE):
                 width = 3 if ((x % 100 == 0) and (y % 100 == 0)) else 1
                 pygame.draw.line(GameConfig.WINDOW, pygame.Color('gray30'), (x, 0), (x, GameConfig.WINDOW.get_size()[1]), width)
                 pygame.draw.line(GameConfig.WINDOW, pygame.Color('gray30'), (0, y), (GameConfig.WINDOW.get_size()[0], y), width)
@@ -298,8 +301,6 @@ class Game():
                     else:
                         text = font.render(f'{segment.x}\n{segment.y}', True, o.head_color if o.head_color else GameColor.DEBUG_COLOR)
                     GameConfig.WINDOW.blit(text, ( segment.x, segment.y ))                    
-
-        
 
     def _print_debug_info(self, objects):
         for i, o in enumerate(objects):
@@ -349,25 +350,21 @@ class Game():
              
             self.__ui_manager.process_events(event)        
 
-    def init_matrix(self):
+    def update_grid(self):
         #TODO move to GameConfig
-        filler = None
-        cols = GameConfig.GRID_SIZE
-        rows = GameConfig.GRID_SIZE
-        self.__matrix = [[filler for c in range(cols)] for r in range(rows)]
-
-    def update_matrix(self):
-        #TODO move to GameConfig
-        self.init_matrix()
+        Grid.reset()
 
         for snake in self.snakes:
             for segment in snake.body:
-                self.__matrix[segment.gx][segment.gy] = 's'
+                Grid.set_item(segment.gx, segment.gy, Grid.GRID_ITEM_SNAKE)
         for food in self.foods:
-            self.__matrix[food.position.gx][food.position.gy] = 'f'
-        
+            Grid.set_item(food.position.gx, food.position.gy, Grid.GRID_ITEM_FOOD)
+
+        print(Grid)
+
 
     def start(self):
+        #TODO refactor, too much going on in one single method
         clock = pygame.time.Clock()
         start_time = pygame.time.get_ticks() 
 
@@ -409,6 +406,8 @@ class Game():
                 if food.status == STATUS_EATEN:
                     self.foods.remove(food)
                     self.add_food()
+
+            #self.update_grid()
 
             if self.__display_debug:
                 self._display_grid()

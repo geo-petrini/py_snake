@@ -11,13 +11,13 @@ class Segment():
         #logging.debug(f'{self}')
     @property
     def size(self):
-        return GameConfig.BLOCK_SIZE
+        return Grid.BLOCK_SIZE
     @property
     def width(self):
-        return GameConfig.BLOCK_SIZE
+        return Grid.BLOCK_SIZE
     @property
     def height(self):
-        return GameConfig.BLOCK_SIZE
+        return Grid.BLOCK_SIZE
 
     def draw(self, direction=None):
         pygame.draw.rect(GameConfig.WINDOW, self.color, [self.x, self.y, self.size, self.size])

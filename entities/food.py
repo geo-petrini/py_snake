@@ -43,13 +43,13 @@ class Food():
 
     @property
     def size(self):
-        return GameConfig.BLOCK_SIZE
+        return Grid.BLOCK_SIZE
     @property
     def width(self):
-        return GameConfig.BLOCK_SIZE
+        return Grid.BLOCK_SIZE
     @property
     def height(self):
-        return GameConfig.BLOCK_SIZE
+        return Grid.BLOCK_SIZE
 
     def draw(self):
         #self.OLD__draw_rotating_surface()
@@ -89,8 +89,9 @@ class Food():
         new_rect.center = self.center
         GameConfig.WINDOW.blit(rotated_image, new_rect.topleft)          
 
-    def reseet(self):
+    def reset(self):
         (w, h) = GameConfig.WINDOW.get_size()
+
         self.position.x = round(random.randrange(0, w - self.size) / self.size) * self.size
         self.position.y = round(random.randrange(0, h - self.size) / self.size) * self.size
         logging.info(f'position reset {self}')
