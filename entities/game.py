@@ -78,16 +78,20 @@ class Game():
             pass
 
     def setup_window_size(self):
-        #min size 800x600
-        #min blocks 35x35
-        #max size screen width height
-        #window must be multiple of BLOCK_SIZE
+        '''
+        min size 800x600
+        margins around window 20px
+        min blocks 35x35
+        max size screen width height
+        window must be multiple of BLOCK_SIZE
+        '''
+        margins = 120
         screen_info = pygame.display.Info() #Required to set a good resolution for the game screen
         screen_width = screen_info.current_w
         screen_height = screen_info.current_h
         first_screen = (screen_width, screen_height) #Take 120 pixels from the height because the menu bar, window bar and dock takes space 
         
-        min_screen_size = min(screen_height, screen_width)
+        min_screen_size = min(screen_height-margins, screen_width-margins)
         if min_screen_size <= 600:
             max_block_size = math.floor(min_screen_size //  Grid.GRID_SIZE)
             Grid.BLOCK_SIZE = max_block_size
@@ -175,12 +179,13 @@ class Game():
         
         for _ in range(items):
             while True:
-                foodx = round(random.randrange(0, w - Grid.BLOCK_SIZE) // Grid.BLOCK_SIZE) * Grid.BLOCK_SIZE
-                foody = round(random.randrange(0, h - Grid.BLOCK_SIZE) // Grid.BLOCK_SIZE) * Grid.BLOCK_SIZE
-                if Grid.get_item(foodx, foody) == None:
+                #find an empty grid position for placing food
+                foodcol = round(random.randrange(0, w - Grid.BLOCK_SIZE) // Grid.BLOCK_SIZE) * Grid.BLOCK_SIZE
+                foodrow = round(random.randrange(0, h - Grid.BLOCK_SIZE) // Grid.BLOCK_SIZE) * Grid.BLOCK_SIZE
+                if Grid.get_item(foodcol, foodrow) == None:
                     break
 
-            f = Food( position=Position(foodx, foody) ) 
+            f = Food( position=Position(foodcol, foodrow) ) 
             self.foods.append(f)
             logging.debug(f'new food {f}')
 
@@ -210,32 +215,32 @@ class Game():
             pause_text_rect.center = (self.width//2, self.height//2)
             GameConfig.WINDOW.blit(pause_text, pause_text_rect)
 
-    def _display_helpers(self, s, f):
-        if s.x == f.x or s.y == f.y:
-            if s.x == f.x:
-                if s.y < f.y:
-                    helpery = s.y + Grid.BLOCK_SIZE 
+    def _display_helpers(self, snake, food):
+        if snake.x == food.x or snake.y == food.y:
+            if snake.x == food.x:
+                if snake.y < food.y:
+                    helpery = snake.y + Grid.BLOCK_SIZE 
                 else:
-                    helpery = f.y + Grid.BLOCK_SIZE 
+                    helpery = food.y + Grid.BLOCK_SIZE 
 
-                if s.y < f.y:
-                    helperh = f.y - helpery 
+                if snake.y < food.y:
+                    helperh = food.y - helpery 
                 else:
-                    helperh = s.y - helpery 
-                helperx = s.x
+                    helperh = snake.y - helpery 
+                helperx = snake.x
                 helperw = Grid.BLOCK_SIZE
 
-            if s.y == f.y:
-                if s.x < f.x:
-                    helperx = s.x + Grid.BLOCK_SIZE  
+            if snake.y == food.y:
+                if snake.x < food.x:
+                    helperx = snake.x + Grid.BLOCK_SIZE  
                 else:
-                    helperx = f.x + Grid.BLOCK_SIZE  
+                    helperx = food.x + Grid.BLOCK_SIZE  
 
-                if s.x < f.x:
-                    helperw = f.x - helperx 
+                if snake.x < food.x:
+                    helperw = food.x - helperx 
                 else:
-                    helperw = s.x - helperx 
-                helpery = s.y
+                    helperw = snake.x - helperx 
+                helpery = snake.y
                 helperh = Grid.BLOCK_SIZE            
 
             '''
@@ -245,7 +250,8 @@ class Game():
             helperh = max(max(s.y, f.y) - helpery, BLOCK_SIZE)
             '''
             #logging.debug(f'helpers: x: {helperx}, y: {helpery}, w: {helperw}, h: {helperh}')
-            pygame.draw.rect(GameConfig.WINDOW, GameColor.HELPER_COLOR, [helperx, helpery, helperw, helperh], 3)
+            # pygame.draw.rect(GameConfig.WINDOW, GameColor.HELPER_COLOR, [helperx, helpery, helperw, helperh], 3)
+            pygame.draw.rect(GameConfig.WINDOW, snake.color, [helperx, helpery, helperw, helperh], 3)
         
     def _display_countdown(self):
         font = pygame.font.Font('./asset/Fipps-Regular.otf', 32)
@@ -286,8 +292,28 @@ class Game():
         t_string_rect = font.render( t_string, True, GameColor.DEBUG_COLOR)
         GameConfig.WINDOW.blit(t_string_rect, (GameConfig.WINDOW.get_size()[0]//2, GameConfig.WINDOW.get_size()[1]//2-30))     
 
-    def _display_debug_info(self, objects):
-        
+    def _display_commands(self):
+        # font = pygame.font.Font('./asset/Fipps-Regular.otf', 10)
+        for sn, snake in enumerate(self.snakes):
+            snake._render_info()
+            # text = font.render(f'left: {pygame.key.name(snake.left_key)}\nright: {pygame.key.name(snake.right_key)}', True, snake.color if snake.color else GameColor.DEBUG_COLOR)
+            # text_x = snake.x
+            # text_y = snake.y
+
+            # coords = Grid.get_position_near( text.get_rect(), (snake.x, snake.y))
+            # if coords:
+            #     text_x = coords[0]
+            #     text_y = coords[1]
+            # else:
+            #     logging.warning(f'commands coords: {coords}')
+
+            # # text.get_rect().move_ip(text_x, text_y)# does not seem to work
+            # pygame.draw.line(GameConfig.WINDOW, GameColor.DEBUG_COLOR, (text.get_rect().center[0]+text_x, text.get_rect().center[1]+text_y), snake.head.get_rect().center, 3)
+            # GameConfig.WINDOW.blit(text, ( text_x, text_y ))
+            # # pygame.draw.line(GameConfig.WINDOW, GameColor.DEBUG_COLOR, text.get_rect().center, snake.head.get_rect().center, 3)
+            # # GameConfig.WINDOW.blit(text, ( self.width//2 - text.get_rect().width//2, self.height//2 + sn*text.get_rect().height ))
+
+    def _display_debug_info(self, objects):       
         for i, o in enumerate(objects):
             font = pygame.font.Font('./asset/Fipps-Regular.otf', 10)
             text = font.render(f'{ o.position }', True, o.color if o.color else GameColor.DEBUG_COLOR)
@@ -296,11 +322,7 @@ class Game():
             if isinstance(o, Snake):
                 font = pygame.font.Font('./asset/Fipps-Regular.otf', 8)
                 for sn, segment in enumerate(o.body):
-                    if sn == 0:
-                        text = font.render(f'{segment.x}\n{segment.y}', True, o.color if o.color else GameColor.DEBUG_COLOR)
-                    else:
-                        text = font.render(f'{segment.x}\n{segment.y}', True, o.head_color if o.head_color else GameColor.DEBUG_COLOR)
-                    GameConfig.WINDOW.blit(text, ( segment.x, segment.y ))                    
+                    segment._render_debug()
 
     def _print_debug_info(self, objects):
         for i, o in enumerate(objects):
@@ -356,11 +378,11 @@ class Game():
 
         for snake in self.snakes:
             for segment in snake.body:
-                Grid.set_item(segment.gx, segment.gy, Grid.GRID_ITEM_SNAKE)
+                Grid.set_item(segment.x, segment.y, Grid.GRID_ITEM_SNAKE)
         for food in self.foods:
-            Grid.set_item(food.position.gx, food.position.gy, Grid.GRID_ITEM_FOOD)
+            Grid.set_item(food.position.x, food.position.y, Grid.GRID_ITEM_FOOD)
 
-        print(Grid)
+        # print(Grid)
 
 
     def start(self):
@@ -407,14 +429,16 @@ class Game():
                     self.foods.remove(food)
                     self.add_food()
 
-            #self.update_grid()
+            self.update_grid()
 
             if self.__display_debug:
                 self._display_grid()
-                self._display_mouse_coordinates()
                 self._display_debug_info( [*self.snakes, *self.foods] )        
+                self._display_mouse_coordinates()
             
-            self._display_pause()
+            if self.__pause:
+                self._display_pause()
+                self._display_commands()
             self._display_countdown()
             
             self.__ui_manager.update(time_delta)

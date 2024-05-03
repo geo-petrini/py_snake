@@ -1,5 +1,6 @@
 from entities.globals import *
 from entities.segment import Segment
+import entities.position as position
 
 import logging
 
@@ -35,7 +36,43 @@ class Snake():
         if len(self.body) > 0:
             #paint in reverse so that head is drawn last, this allows it to be displayed above the other segments in case of overlapping
             for i, segment in enumerate(reversed(self.body)):
-                segment.draw(self.direction)
+                if segment.is_head():
+                    segment.direction = self.direction
+                segment.draw()
+
+    def _render_info(self):
+        font = pygame.font.Font('./asset/Fipps-Regular.otf', 10)
+        output = f'lenght: {self.lenght}\n'
+        output += f'left: {pygame.key.name(self.left_key)}\n'
+        output += f'right: {pygame.key.name(self.right_key)}'
+        text = font.render(output, True, self.color if self.color else GameColor.DEBUG_COLOR)
+        text_x = self.x
+        text_y = self.y
+        text_speed = self.step / 2
+        text_max_distance = 100
+
+        # TODO keep checking if the new position is valid (not overlapping with other grid items)
+        try:
+            dx = self.x - self._info_coords[0]
+            dy = self.y - self._info_coords[1]
+            distance = position.distance(self.x, self.y, int(self._info_coords[0]), int(self._info_coords[1]))
+            direction = position.direction(dx, dy, distance)
+            if distance > text_max_distance:
+                self._info_coords = self._info_coords[0] + direction[0] * text_speed, self._info_coords[1] + direction[1] * text_speed
+        except Exception as e:
+            logging.exception(f'error rendering info for snake {self}')
+            self._info_coords = Grid.get_position_near( text.get_rect(), (self.x, self.y))
+
+        
+        if self._info_coords:
+            text_x = self._info_coords[0]
+            text_y = self._info_coords[1]
+        else:
+            logging.warning(f'commands coords: {self._info_coords}')
+
+        # text.get_rect().move_ip(text_x, text_y)# does not seem to work
+        pygame.draw.line(GameConfig.WINDOW, GameColor.DEBUG_COLOR, (text.get_rect().center[0]+text_x, text.get_rect().center[1]+text_y), self.head.get_rect().center, 3)
+        GameConfig.WINDOW.blit(text, ( text_x, text_y ))        
 
     def set_direction(self, direction):
         self.direction = direction
@@ -89,6 +126,7 @@ class Snake():
         self.status = STATUS_DEAD
 
     def collide_vs_snake(self, target):
+        # TODO check with collidepoint(), colliderect(), collidelist(), collideobjects()
         if isinstance(target, Snake):
             for segment in target.body:
                 if self.head.position == segment.position:

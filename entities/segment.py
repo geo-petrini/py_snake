@@ -8,6 +8,8 @@ class Segment():
         self.color = color
         self.index = index
         self.position = position    #uses @position.setter which does a deep copy
+        self.direction = None
+        self._rect = None
         #logging.debug(f'{self}')
     @property
     def size(self):
@@ -18,18 +20,27 @@ class Segment():
     @property
     def height(self):
         return Grid.BLOCK_SIZE
+    
+    def get_rect(self):
+        self._rect = pygame.Rect(self.x, self.y, self.size, self.size)
+        return self._rect
 
     def draw(self, direction=None):
-        pygame.draw.rect(GameConfig.WINDOW, self.color, [self.x, self.y, self.size, self.size])
-        if self.index != None and 'head' in self.index:
+        self.get_rect()
+        pygame.draw.rect(GameConfig.WINDOW, self.color, self._rect)
+        # pygame.draw.rect(GameConfig.WINDOW, self.color, [self.x, self.y, self.size, self.size])
+        if self.is_head():
             self.__render_head(direction)
 
-    def __render_head(self, direction):
+    def __render_head(self, direction=None):
             '''
             draw a face in the head segment
             rotate the head segment by 90°
             ! the rect x,y will be the same as the original x,y as by https://camo.githubusercontent.com/e3b9946d5ecde4d11a3d4eca0b8f88bcb64969acd8621891a6868faaa0bef1e0/68747470733a2f2f692e737461636b2e696d6775722e636f6d2f76726867742e676966
             '''
+
+            if direction == None:
+                direction = self.direction
             try:
                 if self.head_animation_opening and self.head_animation_frame < 4:
                     self.head_animation_frame += 1
@@ -76,6 +87,22 @@ class Segment():
             draw_area = head_surface.get_rect().move(self.x, self.y)        
             GameConfig.WINDOW.blit(new, draw_area)
 
+    def _render_debug(self):
+        self.get_rect()
+        font = pygame.font.Font('./asset/Fipps-Regular.otf', 8)
+        text = font.render(f'{self.x}\n{self.y}', True, self.color.correct_gamma(0.5) if self.color else GameColor.DEBUG_COLOR)
+        if self.is_head():
+            text_x = self.x - Grid.BLOCK_SIZE
+            text_y = self.y - Grid.BLOCK_SIZE - 4
+            GameConfig.WINDOW.blit(text, ( text_x, text_y ))
+            pygame.draw.line(GameConfig.WINDOW,GameColor.DEBUG_COLOR,( text_x+Grid.BLOCK_SIZE/2, text_y+4+Grid.BLOCK_SIZE/2 ), (self.x, self.y), 3)            
+            # pygame.draw.line(GameConfig.WINDOW,GameColor.DEBUG_COLOR,( text_x+Grid.BLOCK_SIZE/2, text_y+4+Grid.BLOCK_SIZE/2 ), self._rect.center, 3)                        
+        else:
+            GameConfig.WINDOW.blit(text, ( self.x, self.y-4 ))
+
+    def is_head(self):
+        return self.index != None and 'head' in self.index
+    
     @property
     def position(self):
         return self._position if self._position else None
