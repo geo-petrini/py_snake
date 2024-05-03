@@ -380,13 +380,25 @@ class Game():
             logging.debug(f'eat: {s}, {f}')
             f.reload()
 
-    def _display_pause(self):
+    def _display_text(self, text=None):
         #font = pygame.font.Font('./asset/8-BIT WONDER.TTF', 32)
         font = pygame.font.Font('./asset/Fipps-Regular.otf', 32)
-        pause_text = font.render('PAUSE', True, FONT_COLOR)
-        pause_text_rect = pause_text.get_rect()
-        pause_text_rect.center = (self.width//2, self.height//2)
-        self.__window.blit(pause_text, pause_text_rect)
+        text_render = font.render(text, True, FONT_COLOR)
+        text_rect = text_render.get_rect()
+        text_rect.center = (self.width//2, self.height//2)
+        self.__window.blit(text_render, text_rect)        
+    
+    def _display_time(self, t):
+        # change milliseconds into minutes, seconds, milliseconds
+        t_minutes = str(t/60000).zfill(2)
+        t_seconds = str( (t%60000)/1000 ).zfill(2)
+        t_millisecond = str(t%1000).zfill(3)
+
+        # t_string = f'{t_minutes}:{t_seconds}:{t_millisecond}'
+        t_string = f'{t}'
+        font = pygame.font.Font('./asset/Fipps-Regular.otf', 18)
+        t_string_render = font.render( t_string, True, DEBUG_COLOR)
+        self.__window.blit(t_string_render, (self.width//2, self.height//2-30))    
 
     def _display_helpers(self, s, f):
         if s.x == f.x or s.y == f.y:
@@ -445,17 +457,7 @@ class Game():
         mouse_text = font.render(f'{ pygame.mouse.get_pos() }', True, DEBUG_COLOR)
         self.__window.blit(mouse_text, ( pygame.mouse.get_pos() )) 
 
-    def _display_time(self, t):
-    # change milliseconds into minutes, seconds, milliseconds
-        t_minutes = str(t/60000).zfill(2)
-        t_seconds = str( (t%60000)/1000 ).zfill(2)
-        t_millisecond = str(t%1000).zfill(3)
-
-        #t_string = f'{t_minutes}:{t_seconds}:{t_millisecond}'
-        t_string = f'{t}'
-        font = pygame.font.Font('./asset/Fipps-Regular.otf', 18)
-        t_string_rect = font.render( t_string, True, DEBUG_COLOR)
-        self.__window.blit(t_string_rect, (self.__window.get_size()[0]//2, self.__window.get_size()[1]//2-30))     
+ 
 
     def _display_debug_info(self, objects):
         font = pygame.font.Font('./asset/Fipps-Regular.otf', 18)
@@ -527,7 +529,7 @@ class Game():
             if not self.__pause: self._update_snakes()
 
             count_time = pygame.time.get_ticks() - start_time
-            #self._display_time(count_time)
+            # self._display_time(count_time)
 
             for snake in self.snakes:
                 snake.draw()
@@ -539,12 +541,15 @@ class Game():
             if self.__display_debug:
                 self._display_grid()
                 self._display_mouse_coordinates()
-                self._display_debug_info( [*snakes, food] )        
+                self._display_debug_info( [*self.snakes, food] )        
             
-            if self.__pause: self._display_pause()
+            if self.__pause: self._display_text('PAUSE')
             
+            # if sum([1 for s in self.snakes if s.is_alive()]) == 0:
+            #     self._display_text('GAME OVER')
+
             self.__ui_manager.update(time_delta)
-            self.__ui_manager.draw_ui(self.__window)
+            # self.__ui_manager.draw_ui(self.__window)
             pygame.display.update()
 
         pygame.quit()
@@ -552,5 +557,6 @@ class Game():
 
 
 if __name__ == "__main__":
+    logging.info('new game session started')
     g = Game()
     g.start()

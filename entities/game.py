@@ -55,8 +55,6 @@ class Game():
         self.__foods = []
         self.__players_number = 4
 
-        self.__matrix = None
-
         pygame.init()
 
         self.setup_window_size()
@@ -249,14 +247,14 @@ class Game():
             '''
             #logging.debug(f'helpers: x: {helperx}, y: {helpery}, w: {helperw}, h: {helperh}')
             # pygame.draw.rect(GameConfig.WINDOW, GameColor.HELPER_COLOR, [helperx, helpery, helperw, helperh], 3)
-            pygame.draw.rect(GameConfig.WINDOW, snake.color, [helperx, helpery, helperw, helperh], 3)
+            pygame.draw.rect(GameConfig.WINDOW, snake.color.correct_gamma(0.3), [helperx, helpery, helperw, helperh], 3)
         
     def _display_countdown(self):
         font = pygame.font.Font('./asset/Fipps-Regular.otf', 32)
         if self.countdown_timer > 0:
             countdown_text = font.render(f'{ self.countdown_timer }', True, GameColor.FONT_COLOR)
             countdown_text_rect = countdown_text.get_rect()
-            countdown_text_rect.center = (self.width//2, self.height//2)
+            countdown_text_rect.center = (self.width//2, self.height//2 - countdown_text_rect.height )
             GameConfig.WINDOW.blit(countdown_text, countdown_text_rect)        
 
     def _display_score(self):
@@ -380,11 +378,13 @@ class Game():
                 self.add_snakes( self.__players_number )
                 self.add_food( self.__players_number )
 
-                _test_snake_add_lenght(self.snakes[0], 50)
-                _test_snake_add_lenght(self.snakes[1], 20)
+                # _test_snake_add_lenght(self.snakes[0], 50)
+                # _test_snake_add_lenght(self.snakes[1], 20)
                 self.__game_initialized = True
 
             self._display_score()
+            if self.__pause:
+                self._display_commands()            
 
             if not self.__pause and self.countdown_timer <= 0: 
                 self._update_snakes()
@@ -419,11 +419,11 @@ class Game():
             
             if self.__pause:
                 self._display_pause()
-                self._display_commands()
-            self._display_countdown()
+
+            self._display_countdown()   # countdown continues even in pause, this is wanted
             
             self.__ui_manager.update(time_delta)
-            self.__ui_manager.draw_ui(GameConfig.WINDOW)
+            # self.__ui_manager.draw_ui(GameConfig.WINDOW)
             pygame.display.update()
 
         pygame.quit()

@@ -1,5 +1,7 @@
 /app.log
+/app.log*
 /app_debug.log
+/app_debug.log*
 /pyvenv.cfg
 /venv
 /.venv

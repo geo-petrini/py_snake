@@ -73,7 +73,7 @@ class Snake():
             logging.warning(f'commands coords: {self._info_coords}')
 
         # text.get_rect().move_ip(text_x, text_y)# does not seem to work
-        pygame.draw.line(GameConfig.WINDOW, GameColor.DEBUG_COLOR, (text.get_rect().center[0]+text_x, text.get_rect().center[1]+text_y), self.head.get_rect().center, 3)
+        pygame.draw.line(GameConfig.WINDOW, self.color.correct_gamma(0.3), (text.get_rect().center[0]+text_x, text.get_rect().center[1]+text_y), self.head.get_rect().center, 3)
         GameConfig.WINDOW.blit(text, ( text_x, text_y ))        
 
     def set_direction(self, direction):
@@ -126,6 +126,12 @@ class Snake():
 
     def die(self):
         self.status = STATUS_DEAD
+
+    def is_alive(self):
+        if self.status != STATUS_DEAD: 
+            return True 
+        else: 
+            return False
 
     def collide_vs_snake(self, target):
         # TODO alternative check with collidepoint(), colliderect(), collidelist(), collideobjects()
