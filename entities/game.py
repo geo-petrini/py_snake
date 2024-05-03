@@ -176,7 +176,7 @@ class Game():
         
         for _ in range(items):
             while True:
-                #find an empty grid position for placing food
+                # TODO find an empty grid position for placing food, currently does not work
                 foodcol = round(random.randrange(0, w - Grid.BLOCK_SIZE) // Grid.BLOCK_SIZE) * Grid.BLOCK_SIZE
                 foodrow = round(random.randrange(0, h - Grid.BLOCK_SIZE) // Grid.BLOCK_SIZE) * Grid.BLOCK_SIZE
                 if Grid.get_item(foodcol, foodrow) == None:
@@ -187,10 +187,11 @@ class Game():
             logging.debug(f'new food {f}')
 
     def chk_collision(self, item, target):
+        # TODO move collision check inside snakes using Grid references
         if isinstance(target, list):
             for t in target:
-                if item != t:
-                    self.chk_collision(item, t)
+                # if item == t: continue #avoid self collision
+                self.chk_collision(item, t)
 
         #collision snake and food
         if isinstance(item, Snake) and isinstance(target, Food):

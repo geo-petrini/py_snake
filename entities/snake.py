@@ -59,9 +59,11 @@ class Snake():
             direction = position.direction(dx, dy, distance)
             if distance > text_max_distance:
                 self._info_coords = self._info_coords[0] + direction[0] * text_speed, self._info_coords[1] + direction[1] * text_speed
+        except AttributeError as e:
+            self._info_coords = Grid.get_position_near( text.get_rect(), (self.x, self.y))
         except Exception as e:
             logging.exception(f'error rendering info for snake {self}')
-            self._info_coords = Grid.get_position_near( text.get_rect(), (self.x, self.y))
+            
 
         
         if self._info_coords:
@@ -126,12 +128,12 @@ class Snake():
         self.status = STATUS_DEAD
 
     def collide_vs_snake(self, target):
-        # TODO check with collidepoint(), colliderect(), collidelist(), collideobjects()
+        # TODO alternative check with collidepoint(), colliderect(), collidelist(), collideobjects()
         if isinstance(target, Snake):
             for segment in target.body:
-                if self.head.position == segment.position:
+                if self == target and segment.is_head(): continue # head to head self collision is not possible
+                if self.head.position == segment.position: # return True only if head collides with a segment
                     return True
-                
         return False
 
     def move(self):
