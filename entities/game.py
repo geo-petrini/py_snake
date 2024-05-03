@@ -130,10 +130,7 @@ class Game():
             color = vars(GameColor)[f'SNAKE_{index}_COLOR'] if f'SNAKE_{index}_COLOR' in vars(GameColor) else GameColor.DEBUG_COLOR
             #head_color = color.correct_gamma(0.5) #globals()[f'SNAKE_{index}_HEAD_COLOR'] if f'SNAKE_{index}_HEAD_COLOR' in globals() else DEBUG_COLOR
             name = f'Player {index}'
-            # x = window.get_size()[0]//2 + index * BLOCK_SIZE * 2
-            # y = window.get_size()[1]//2 + index * BLOCK_SIZE * 2
-            #p = Position( x, y )
-            #s = Snake(p, color=color, head_color=head_color, name=name)
+
             if i == 0: keys = {'left':pygame.K_LEFT, 'right':pygame.K_RIGHT}
             if i == 1: keys = {'left':pygame.K_a, 'right':pygame.K_s}
             if i == 2: keys = {'left':pygame.K_k, 'right':pygame.K_l}
@@ -293,25 +290,8 @@ class Game():
         GameConfig.WINDOW.blit(t_string_rect, (GameConfig.WINDOW.get_size()[0]//2, GameConfig.WINDOW.get_size()[1]//2-30))     
 
     def _display_commands(self):
-        # font = pygame.font.Font('./asset/Fipps-Regular.otf', 10)
         for sn, snake in enumerate(self.snakes):
             snake._render_info()
-            # text = font.render(f'left: {pygame.key.name(snake.left_key)}\nright: {pygame.key.name(snake.right_key)}', True, snake.color if snake.color else GameColor.DEBUG_COLOR)
-            # text_x = snake.x
-            # text_y = snake.y
-
-            # coords = Grid.get_position_near( text.get_rect(), (snake.x, snake.y))
-            # if coords:
-            #     text_x = coords[0]
-            #     text_y = coords[1]
-            # else:
-            #     logging.warning(f'commands coords: {coords}')
-
-            # # text.get_rect().move_ip(text_x, text_y)# does not seem to work
-            # pygame.draw.line(GameConfig.WINDOW, GameColor.DEBUG_COLOR, (text.get_rect().center[0]+text_x, text.get_rect().center[1]+text_y), snake.head.get_rect().center, 3)
-            # GameConfig.WINDOW.blit(text, ( text_x, text_y ))
-            # # pygame.draw.line(GameConfig.WINDOW, GameColor.DEBUG_COLOR, text.get_rect().center, snake.head.get_rect().center, 3)
-            # # GameConfig.WINDOW.blit(text, ( self.width//2 - text.get_rect().width//2, self.height//2 + sn*text.get_rect().height ))
 
     def _display_debug_info(self, objects):       
         for i, o in enumerate(objects):
