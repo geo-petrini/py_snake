@@ -135,6 +135,7 @@ class Snake():
 
     def collide_vs_snake(self, target):
         # TODO alternative check with collidepoint(), colliderect(), collidelist(), collideobjects()
+        # TODO consider checking if it is an head to head collision with another snake
         if isinstance(target, Snake):
             for segment in target.body:
                 if self == target and segment.is_head(): continue # head to head self collision is not possible
@@ -157,10 +158,7 @@ class Snake():
         '''
         new_segment = Segment( self.position, color=self.color)
         self.body.insert(1, new_segment )
-        #logging.debug(f'{self}')
         if len(self.body) > self.lenght:
-            #self.body.pop( len(self.body)-1 )
-            #self.body.pop(-1)
             del self.body[-1]        
     
     def _update_head(self):

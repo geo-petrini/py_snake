@@ -486,23 +486,13 @@ class Game():
                         if event.key == snake.left_key: snake.rotate_left()
                         if event.key == snake.right_key: snake.rotate_right()
                     except:
-                        logging.exception(f'error handling event {event.key} for snake {snake}')                   
-                    
-                #elif event.key == pygame.K_UP:
-                #    snakes[0].set_direction(Snake.UP)
-                #elif event.key == pygame.K_DOWN:
-                #    snakes[0].set_direction(Snake.DOWN)    
-                 
-                #elif event.key == pygame.K_w:
-                #    snakes[1].set_direction(Snake.UP)
-                #elif event.key == pygame.K_s:
-                #    snakes[1].set_direction(Snake.DOWN)                      
+                        logging.exception(f'error handling event {event.key} for snake {snake}')                                
     
                 if event.key == pygame.K_F12:
                     self.__display_debug = not self.__display_debug
 
                 if event.key == pygame.K_F12 and pygame.key.get_mods() & pygame.KMOD_SHIFT:
-                    self._print_debug_info( [*snakes, food] )
+                    self._print_debug_info( [*self.snakes, self.food] )
 
                 if event.key == pygame.K_SPACE:
                     self.__pause = not self.pause
@@ -545,9 +535,6 @@ class Game():
             
             if self.__pause: self._display_text('PAUSE')
             
-            # if sum([1 for s in self.snakes if s.is_alive()]) == 0:
-            #     self._display_text('GAME OVER')
-
             self.__ui_manager.update(time_delta)
             # self.__ui_manager.draw_ui(self.__window)
             pygame.display.update()

@@ -46,6 +46,7 @@ class Game():
         self.window_width = 800
         self.window_height = 600
         
+        self.__quit = False
         self.__game_over = False
         self.__pause = False
         self.__display_debug = False  
@@ -62,7 +63,7 @@ class Game():
         
         self.__ui_manager = pygame_gui.UIManager(GameConfig.WINDOW.get_size())
         self.__ui_manager.set_visual_debug_mode(True)
-        #pygame.display.update()
+
         pygame.display.set_caption('Snake game')
 
 
@@ -70,7 +71,7 @@ class Game():
         self.countdown_timer = 5
 
         try:
-            icon = pygame.image.load('res/icon.png')
+            icon = pygame.image.load('asset/icon.png')
             pygame.display.set_icon(icon)
         except:
             pass
@@ -203,13 +204,13 @@ class Game():
                 item.die()
                 logging.debug(f'die: {item}')
 
-    def _display_pause(self):
-        if self.__pause:
-            font = pygame.font.Font('./asset/Fipps-Regular.otf', 32)
-            pause_text = font.render('PAUSE', True, GameColor.FONT_COLOR)
-            pause_text_rect = pause_text.get_rect()
-            pause_text_rect.center = (self.width//2, self.height//2)
-            GameConfig.WINDOW.blit(pause_text, pause_text_rect)
+    def _display_text(self, text=None):
+        #font = pygame.font.Font('./asset/8-BIT WONDER.TTF', 32)
+        font = pygame.font.Font('./asset/Fipps-Regular.otf', 32)
+        text_render = font.render(text, True, GameColor.FONT_COLOR)
+        text_rect = text_render.get_rect()
+        text_rect.center = (self.width//2, self.height//2)
+        GameConfig.WINDOW.blit(text_render, text_rect)                 
 
     def _display_helpers(self, snake, food):
         if snake.x == food.x or snake.y == food.y:
@@ -309,32 +310,15 @@ class Game():
 
     def _update_snakes(self):
         for snake in self.snakes:
-            snake.update()
+            snake.update()       
 
     def _handle_events(self):
         for event in pygame.event.get():
             #logging.debug(event)   #prints out all the actions that take place on the screen
             if event.type == pygame.QUIT:
-                self.__game_over=True    
-            if event.type == pygame.KEYDOWN:
+                self.__quit=True   
 
-                for snake in self.snakes:       
-                    try:
-                        if event.key == snake.left_key: snake.rotate_left()
-                        if event.key == snake.right_key: snake.rotate_right()
-                    except:
-                        logging.exception(f'error handling event {event.key} for snake {snake}')                   
-                    
-                #elif event.key == pygame.K_UP:
-                #    snakes[0].set_direction(Snake.UP)
-                #elif event.key == pygame.K_DOWN:
-                #    snakes[0].set_direction(Snake.DOWN)    
-                 
-                #elif event.key == pygame.K_w:
-                #    snakes[1].set_direction(Snake.UP)
-                #elif event.key == pygame.K_s:
-                #    snakes[1].set_direction(Snake.DOWN)                      
-    
+            if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_F12:
                     self.__display_debug = not self.__display_debug
 
@@ -343,8 +327,17 @@ class Game():
 
                 if event.key == pygame.K_SPACE:
                     self.__pause = not self.__pause
+
                 if event.key == pygame.K_ESCAPE:
-                    self.__game_over = True 
+                    self.__quit = True 
+
+                for snake in self.snakes:
+                    if snake.is_alive():       
+                        try:
+                            if event.key == snake.left_key: snake.rotate_left()
+                            if event.key == snake.right_key: snake.rotate_right()
+                        except:
+                            logging.exception(f'error handling event {event.key} for snake {snake}')                         
             
             if event.type == GameConfig.TIMER_TICK_EVENT:
                 if self.countdown_timer > 0: self.countdown_timer -= 1
@@ -368,60 +361,77 @@ class Game():
         #TODO refactor, too much going on in one single method
         clock = pygame.time.Clock()
         start_time = pygame.time.get_ticks() 
+        
 
-        while not self.__game_over:
+        if not self.__game_initialized:
+            self.add_snakes( self.__players_number )
+            self.add_food( self.__players_number )
+
+            _test_snake_add_lenght(self.snakes[0], 3)
+            _test_snake_add_lenght(self.snakes[1], 3)
+            _test_snake_add_lenght(self.snakes[2], 3)
+            _test_snake_add_lenght(self.snakes[3], 3)
+            self.__game_initialized = True
+
+        while not self.__quit:
             time_delta = clock.tick(GameConfig.FPS)
             GameConfig.WINDOW.fill(GameColor.BACKGROUND_COLOR)
             self._handle_events()
-            
-            if self.countdown_timer == 5 and not self.__game_initialized:
-                self.add_snakes( self.__players_number )
-                self.add_food( self.__players_number )
 
-                # _test_snake_add_lenght(self.snakes[0], 50)
-                # _test_snake_add_lenght(self.snakes[1], 20)
-                self.__game_initialized = True
+            if not self.__game_over:
+                self._display_score()
+                if self.__pause or self.countdown_timer > 0:
+                    self._display_commands()            
 
-            self._display_score()
-            if self.__pause:
-                self._display_commands()            
+                if not self.__pause and self.countdown_timer <= 0: 
+                    self._update_snakes()
 
-            if not self.__pause and self.countdown_timer <= 0: 
-                self._update_snakes()
+                count_time = pygame.time.get_ticks() - start_time
+                
 
-            count_time = pygame.time.get_ticks() - start_time
-            #self._display_time(count_time)
+                for snake in self.snakes:
+                    snake.draw()
+                    self.chk_collision(snake, self.snakes)
+                    for food in self.foods:
+                        food.draw()
+                        self.chk_collision(snake, food)
+                        self._display_helpers(snake, food)
 
-            for snake in self.snakes:
-                snake.draw()
-                self.chk_collision(snake, self.snakes)
+                #do this loop after collisions to ensure collision check and make sure that all DEAD snakes are removed
+                for snake in self.snakes:
+                    if snake.status == STATUS_DEAD:
+                        self.snakes.remove(snake)
+
                 for food in self.foods:
-                    food.draw()
-                    self.chk_collision(snake, food)
-                    self._display_helpers(snake, food)
+                    if food.status == STATUS_EATEN:
+                        self.foods.remove(food)
+                        self.add_food()
 
-            #do this loop after collisions to ensure collision check and make sure that all DEAD snakes are removed
-            for snake in self.snakes:
-                if snake.status == STATUS_DEAD:
-                    self.snakes.remove(snake)
+                self.update_grid()
 
-            for food in self.foods:
-                if food.status == STATUS_EATEN:
-                    self.foods.remove(food)
-                    self.add_food()
+                if self.__display_debug:
+                    self._display_grid()
+                    self._display_debug_info( [*self.snakes, *self.foods] )        
+                    self._display_mouse_coordinates()
+                    self._display_time(count_time)
+                
+                if self.__pause:
+                    self._display_text('PAUSE')
 
-            self.update_grid()
+                self._display_countdown()   # countdown continues even in pause, this is wanted
+                
+                alive_snakes = sum([1 for s in self.snakes if s.is_alive()])
+                if alive_snakes == 1:
+                    # TODO start countdown timer for end of game
+                    pass
+                if alive_snakes == 0:
+                    self.__game_over = True
+                    self.countdown_timer = 5
 
-            if self.__display_debug:
-                self._display_grid()
-                self._display_debug_info( [*self.snakes, *self.foods] )        
-                self._display_mouse_coordinates()
-            
-            if self.__pause:
-                self._display_pause()
+            if self.__game_over and self.countdown_timer > 0:
+                self._display_text('GAME OVER')
+                self._display_countdown()
 
-            self._display_countdown()   # countdown continues even in pause, this is wanted
-            
             self.__ui_manager.update(time_delta)
             # self.__ui_manager.draw_ui(GameConfig.WINDOW)
             pygame.display.update()
