@@ -1,4 +1,4 @@
-pygame
+# pygame
 #pygame==2.1.2
 pygame-gui
 #pygame-gui==0.6.9
